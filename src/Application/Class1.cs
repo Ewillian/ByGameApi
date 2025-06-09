@@ -1,4 +1,4 @@
-﻿namespace ByGamesApi.Domain
+﻿namespace ByGameApi.Application
 {
     public class Class1
     {
