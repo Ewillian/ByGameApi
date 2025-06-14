@@ -5,6 +5,7 @@ using ByGameApi.Infrastructure.Options;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 using MySqlConnector;
 
@@ -37,8 +38,9 @@ public class ByRepository : IByRepository
     /// <inheritdoc />
     public async Task<ScoreDao> GetUnitaryScore(string PlayerName)
     {
-        var result = await ExecuteGetQuery($"{_options.SqlQueryGet} LIMIT 1;");
-        return result.FirstOrDefault()!;
+        var result = await ExecuteGetQuery($"{_options.SqlQueryGet} WHERE PlayerName = '{PlayerName}' LIMIT 1;");
+
+        return result.IsNullOrEmpty() ? new ScoreDao() : result.FirstOrDefault()!;
     }
 
     /// <inheritdoc />

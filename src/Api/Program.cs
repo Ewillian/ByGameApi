@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 using ByGameApi.Domain.Abstractions;
 using ByGameApi.Domain.Services;
 using ByGameApi.Infrastructure.Options;
@@ -33,3 +35,16 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+#pragma warning disable S3903
+namespace Cds.ProductReferentialSystemTesting.Api
+{
+    [ExcludeFromCodeCoverage]
+    public class Program
+    {
+        protected Program()
+        {
+        }
+    }
+}
+#pragma warning restore S3903
