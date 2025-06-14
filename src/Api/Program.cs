@@ -1,3 +1,5 @@
+using ByGameApi.Domain.Abstractions;
+using ByGameApi.Domain.Services;
 using ByGameApi.Infrastructure.Options;
 using ByGameApi.Infrastructure.Repositories;
 
@@ -12,7 +14,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<DatabaseOptions>(builder.Configuration.GetSection("DatabaseOptions"));
 
-builder.Services.AddSingleton<IByRepository, ByRepository>();
+builder.Services.AddScoped<IByRepository, ByRepository>();
+builder.Services.AddScoped<IScoreService, ScoreService>();
 
 var app = builder.Build();
 

@@ -12,5 +12,8 @@ public class ScoreDao
 
     [JsonProperty("value")]
     public int Value { get; set; }
+
+    [JsonProperty("date")]
+    public DateTime Date { get; private set; }
 }
 

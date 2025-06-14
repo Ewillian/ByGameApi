@@ -1,6 +1,6 @@
 ﻿using ByGameApi.Domain.Dao;
 
-namespace ByGameApi.Infrastructure.Abstractions;
+namespace ByGameApi.Domain.Abstractions;
 
 public interface IByRepository
 {

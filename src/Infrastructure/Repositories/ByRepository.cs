@@ -1,5 +1,9 @@
-﻿using ByGameApi.Domain.Dao;
+﻿using ByGameApi.Domain.Abstractions;
+using ByGameApi.Domain.Dao;
+using ByGameApi.Infrastructure.Exception;
 using ByGameApi.Infrastructure.Options;
+
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using MySqlConnector;
@@ -8,6 +12,11 @@ namespace ByGameApi.Infrastructure.Repositories;
 
 public class ByRepository : IByRepository
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    private readonly ILogger<ByRepository> _logger;
+
     /// <summary>
     /// The database options
     /// </summary>
@@ -18,8 +27,9 @@ public class ByRepository : IByRepository
     /// </summary>
     private readonly MySqlConnection _connection;
 
-    public ByRepository(IOptions<DatabaseOptions> options)
+    public ByRepository(ILogger<ByRepository> logger, IOptions<DatabaseOptions> options)
     {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _options = options.Value ?? throw new ArgumentNullException(nameof(options));
         _connection = new MySqlConnection($"Server={_options.Server};Port={_options.Port};Database={_options.Database};User={_options.User};Password={_options.Password}");
     }
@@ -27,8 +37,8 @@ public class ByRepository : IByRepository
     /// <inheritdoc />
     public async Task<ScoreDao> GetUnitaryScore(string PlayerName)
     {
-        ExecuteGetQuery("SELECT ScoreId, PlayerName, Value FROM Scores ORDER BY Value DESC");
-        return null;
+        var result = await ExecuteGetQuery($"{_options.SqlQueryGet} LIMIT 1;");
+        return result.FirstOrDefault()!;
     }
 
     /// <inheritdoc />
@@ -72,8 +82,8 @@ public class ByRepository : IByRepository
         }
         catch (MySqlException ex)
         {
-            Console.WriteLine($"[MariaDB ERROR] {ex.Message}");
-            return null!;
+            _logger.LogError($"[MariaDB ERROR] {ex.Message}");
+            throw new DatabaseException(ex.Message);
         }
         finally
         {
@@ -111,37 +121,4 @@ public class ByRepository : IByRepository
 
     //    return scores;
     //}
-}
-
-public interface IByRepository
-{
-    /// <summary>
-    /// Retrieves a player's scores.
-    /// </summary>
-    /// <param name="PlayerName">The player name</param>
-    /// <returns>An asynchronous task containing a collection of <see cref="ScoreDao"/> representing the top scores.</returns>
-    Task<ScoreDao> GetUnitaryScore(string PlayerName);
-
-    /// <summary>
-    /// Retrieves the top scores, ordered from highest to lowest.
-    /// </summary>
-    /// <param name="ScoreCount">The number of top scores to retrieve.</param>
-    /// <returns>
-    /// An asynchronous task containing a collection of <see cref="ScoreDao"/> representing the top scores.
-    /// </returns>
-    Task<IEnumerable<ScoreDao>> GetHighestScores(int ScoreCount);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="score"></param>
-    /// <returns></returns>
-    Task<bool> UpdateUnitaryScore(ScoreDao score);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="score"></param>
-    /// <returns></returns>
-    Task<bool> InsertUnitaryScore(ScoreDao score);
 }

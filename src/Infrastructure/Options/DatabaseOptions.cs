@@ -50,6 +50,11 @@ public sealed class DatabaseOptions : IOptions<DatabaseOptions>
     public int ConnectionTimeout { get; init; } = 10000;
 
     /// <summary>
+    /// The sql get score query
+    /// </summary>
+    public string SqlQueryGet { get; init; } = "";
+
+    /// <summary>
     /// Value
     /// </summary>
     DatabaseOptions IOptions<DatabaseOptions>.Value => this;
