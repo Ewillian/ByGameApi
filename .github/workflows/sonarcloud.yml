@@ -30,8 +30,10 @@ jobs:
         run: |
           dotnet sonarscanner begin \
             /k:"Ewillian_ByGameApi" \
+            /o:"ewillian" \
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+            /d:sonar.scanner.skipJreProvisioning=true
 
       - name: Restore dependencies
         run: dotnet restore
