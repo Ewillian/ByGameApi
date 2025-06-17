@@ -45,6 +45,9 @@ jobs:
       - name: Build solution
         run: dotnet build --no-restore
 
+      - name: List coverage files
+        run: mkdir TestResults
+
       - name: Run tests with coverage
         run: |
           dotnet test tests/Unit/Api/ByGameApi.Api.Tests.Unit.csproj \
