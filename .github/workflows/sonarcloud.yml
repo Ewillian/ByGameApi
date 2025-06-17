@@ -35,7 +35,9 @@ jobs:
             /o:"ewillian" \
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.cs.opencover.reportsPaths="TestResults/Api.coverage.opencover.xml,TestResults/Domain.coverage.opencover.xml,TestResults/Infra.coverage.opencover.xml" \
-            /d:sonar.scanner.skipJreProvisioning=true
+            /d:sonar.scanner.skipJreProvisioning=true \
+            /d:sonar.exclusions="**/obj/**,**/bin/**,**/*.designer.cs,**/*.g.cs,**/*.g.i.cs,**/*.json,**/*.config,**/*.xml,**/packages/**,**/.nuget/**" \
+            /d:sonar.test.exclusions="**/tests/**,**/*.Tests.cs"
 
       - name: Restore dependencies
         run: dotnet restore
