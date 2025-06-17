@@ -55,7 +55,6 @@ public class ScoreCommand
     /// <returns></returns>
     private static bool ContainsSuspiciousSqlChars(string input)
     {
-        // Ex : apostrophes, guillemets, commentaires SQL, points-virgules
         return Regex.IsMatch(input, @"['"";\\-]{1,}");
     }
 
@@ -66,7 +65,6 @@ public class ScoreCommand
     /// <returns></returns>
     public static bool ContainsUnusualUnicode(string input)
     {
-        // Liste des unicodes suspects
         char[] suspicious = ['\u0000', '\u200B', '\u202E', '\uFEFF'];
 
         return input.Any(c => suspicious.Contains(c));

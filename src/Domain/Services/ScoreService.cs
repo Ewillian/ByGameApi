@@ -2,7 +2,7 @@
 using ByGameApi.Domain.Dao;
 
 using Microsoft.Extensions.Logging;
-
+using Microsoft.IdentityModel.Tokens;
 
 namespace ByGameApi.Domain.Services;
 
@@ -19,6 +19,11 @@ public class ScoreService : IScoreService
 
     public async Task<ScoreDao> GetScore(string playerName)
     {
+        if (playerName.IsNullOrEmpty())
+        {
+            return new ScoreDao { PlayerName = "" };
+        }
+
         return await _byRepository.GetUnitaryScore(playerName);
     }
 }
