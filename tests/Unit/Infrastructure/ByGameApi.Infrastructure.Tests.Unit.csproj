@@ -20,4 +20,8 @@
     <ProjectReference Include="..\..\..\src\Infrastructure\ByGameApi.Infrastructure.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <SonarQubeTestProject>true</SonarQubeTestProject>
+  </PropertyGroup>
+
 </Project>
