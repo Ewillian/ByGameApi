@@ -1,7 +1,10 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Diagnostics.CodeAnalysis;
+
+using Microsoft.Extensions.Options;
 
 namespace ByGameApi.Infrastructure.Options;
 
+[ExcludeFromCodeCoverage]
 public sealed class DatabaseOptions : IOptions<DatabaseOptions>
 {
     /// <summary>

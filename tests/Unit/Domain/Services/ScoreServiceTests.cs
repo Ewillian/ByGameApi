@@ -28,7 +28,7 @@ public class ScoreServiceTests
         });
 
         //Assert
-        Assert.Equal(missingElement == "logger" ? "logger" : "byRepository", exception.ParamName);
+        Assert.Equal(missingElement, exception.ParamName);
     }
 
     [Theory]

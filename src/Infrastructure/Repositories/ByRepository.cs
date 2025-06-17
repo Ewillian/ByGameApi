@@ -31,7 +31,7 @@ public class ByRepository : IByRepository
     public ByRepository(ILogger<ByRepository> logger, IOptions<DatabaseOptions> options)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _connection = new MySqlConnection($"Server={_options.Server};Port={_options.Port};Database={_options.Database};User={_options.User};Password={_options.Password}");
     }
 

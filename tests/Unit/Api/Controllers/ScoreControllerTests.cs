@@ -55,7 +55,7 @@ public class ScoreControllerTests
         });
 
         //Assert
-        Assert.Equal(missingElement == "logger" ? "logger" : "scoreService", exception.ParamName);
+        Assert.Equal(missingElement, exception.ParamName);
     }
 
     [Fact]
