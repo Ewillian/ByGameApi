@@ -61,32 +61,32 @@ jobs:
       - name: End SonarCloud analysis
         run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
 
-    notifyDiscord:
-      name: Notify Discord
-      runs-on: ubuntu-latest
-      needs: sonarcloud
-      if: always()
-      steps:
-        - name: Send Discord Notification
-          run: |
-            STATUS="✅ Build succeeded!"
-            if [ "${{ needs.buildForAllSupportedPlatforms.result }}" != "success" ]; then
-              STATUS="❌ Build failed!"
-            fi
+  notifyDiscord:
+    name: Notify Discord
+    runs-on: ubuntu-latest
+    needs: sonarcloud
+    if: always()
+    steps:
+      - name: Send Discord Notification
+        run: |
+          STATUS="✅ Build succeeded!"
+          if [ "${{ needs.buildForAllSupportedPlatforms.result }}" != "success" ]; then
+            STATUS="❌ Build failed!"
+          fi
 
-            curl -H "Content-Type: application/json" \
-                -X POST \
-                -d '{
-                  "username": "GitHub Actions",
-                  "embeds": [{
-                    "title": "🚀 Unity Build Status",
-                    "description": "'"$STATUS"'",
-                    "color": 16711680,
-                    "fields": [
-                      {"name": "Branch", "value": "${{ github.ref }}", "inline": true},
-                      {"name": "Committer", "value": "${{ github.actor }}", "inline": true},
-                      {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
-                    ]
-                  }]
-                }' \
-                ${{ secrets.DISCORD_WEBHOOK_URL }}
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d '{
+                 "username": "GitHub Actions",
+                 "embeds": [{
+                   "title": "🚀 Unity Build Status",
+                   "description": "'"$STATUS"'",
+                   "color": 16711680,
+                   "fields": [
+                     {"name": "Branch", "value": "${{ github.ref }}", "inline": true},
+                     {"name": "Committer", "value": "${{ github.actor }}", "inline": true},
+                     {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
+                   ]
+                 }]
+               }' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
