@@ -32,7 +32,7 @@ jobs:
             /k:"Ewillian_ByGameApi" \
             /o:"ewillian" \
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+            /d:sonar.cs.opencover.reportsPaths="TestResults/*.coverage.opencover.xml" \
             /d:sonar.scanner.skipJreProvisioning=true
 
       - name: Restore dependencies
