@@ -62,6 +62,12 @@ jobs:
             /p:CoverletOutputFormat=opencover \
             /p:CoverletOutput=./TestResults/Infra.coverage.opencover.xml
 
+      - name: List coverage files
+        run: ls -la TestResults/
+
+      - name: List source
+        run: ls -la ./
+
       - name: End SonarCloud analysis
         run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
 
