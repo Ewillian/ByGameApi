@@ -30,7 +30,7 @@ jobs:
         run: |
           dotnet sonarscanner begin \
             /k:"Ewillian_ByGameApi" \
-            /o:"ewillian-github" \
+            /o:"Ewillian" \
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
