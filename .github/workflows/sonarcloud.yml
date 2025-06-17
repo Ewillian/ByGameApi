@@ -1,39 +1,61 @@
-name: SonarCloud
+name: Analyze PR with SonarCloud
 
 on:
-  push:
-    branches:
-      - Safe
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
       - Safe
+
 jobs:
-  build:
-    name: SonarCloud
+  sonarcloud:
+    name: SonarCloud PR Analysis
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up .NET
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Install dependencies
+      - name: Install coverlet global tool
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Install SonarScanner
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Begin SonarCloud analysis
+        run: |
+          dotnet sonarscanner begin \
+            /k:"Ewillian_ByGameApi" \
+            /o:"ewillian-github" \
+            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+
+      - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build the solution
+      - name: Build solution
         run: dotnet build --no-restore
 
-      - name: Test the solution
-        run: dotnet test --no-build --verbosity normal
+      - name: Run tests with coverage
+        run: |
+          dotnet test Tests/Unit/ByGameApi.Api.Tests.Unit/ByGameApi.Api.Tests.Unit.csproj \
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=./TestResults/Api.coverage.opencover.xml
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
-        with:
-          organization: Ewillian
-          projectKey: Ewillian_ByGameApi
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          dotnet test Tests/Unit/ByGameApi.Domain.Tests.Unit/ByGameApi.Domain.Tests.Unit.csproj \
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=./TestResults/Domain.coverage.opencover.xml
+
+          dotnet test Tests/Unit/ByGameApi.Infrastructure.Tests.Unit/ByGameApi.Infrastructure.Tests.Unit.csproj \
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=./TestResults/Infra.coverage.opencover.xml
+
+      - name: End SonarCloud analysis
+        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
