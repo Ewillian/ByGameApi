@@ -1,7 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using System.Diagnostics.CodeAnalysis;
+
+using Newtonsoft.Json;
 
 namespace ByGameApi.Domain.Dao;
 
+[ExcludeFromCodeCoverage]
 public class ScoreDao
 {
     [JsonProperty("scoreId")]
@@ -12,5 +15,8 @@ public class ScoreDao
 
     [JsonProperty("value")]
     public int Value { get; set; }
+
+    [JsonProperty("date")]
+    public DateTime Date { get; private set; }
 }
 

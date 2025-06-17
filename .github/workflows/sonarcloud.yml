@@ -1,0 +1,39 @@
+name: SonarCloud
+
+on:
+  push:
+    branches:
+      - Safe
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - Safe
+jobs:
+  build:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build the solution
+        run: dotnet build --no-restore
+
+      - name: Test the solution
+        run: dotnet test --no-build --verbosity normal
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          organization: Ewillian
+          projectKey: Ewillian_ByGameApi
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -1,7 +1,10 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Diagnostics.CodeAnalysis;
+
+using Microsoft.Extensions.Options;
 
 namespace ByGameApi.Infrastructure.Options;
 
+[ExcludeFromCodeCoverage]
 public sealed class DatabaseOptions : IOptions<DatabaseOptions>
 {
     /// <summary>
@@ -48,6 +51,11 @@ public sealed class DatabaseOptions : IOptions<DatabaseOptions>
     /// The maxTime MS of queries
     /// </summary>
     public int ConnectionTimeout { get; init; } = 10000;
+
+    /// <summary>
+    /// The sql get score query
+    /// </summary>
+    public string SqlQueryGet { get; init; } = "";
 
     /// <summary>
     /// Value

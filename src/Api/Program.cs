@@ -1,3 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
+
+using ByGameApi.Domain.Abstractions;
+using ByGameApi.Domain.Services;
 using ByGameApi.Infrastructure.Options;
 using ByGameApi.Infrastructure.Repositories;
 
@@ -12,7 +16,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<DatabaseOptions>(builder.Configuration.GetSection("DatabaseOptions"));
 
-builder.Services.AddSingleton<IByRepository, ByRepository>();
+builder.Services.AddScoped<IByRepository, ByRepository>();
+builder.Services.AddScoped<IScoreService, ScoreService>();
 
 var app = builder.Build();
 
@@ -30,3 +35,16 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+#pragma warning disable S3903
+namespace Cds.ProductReferentialSystemTesting.Api
+{
+    [ExcludeFromCodeCoverage]
+    public class Program
+    {
+        protected Program()
+        {
+        }
+    }
+}
+#pragma warning restore S3903
