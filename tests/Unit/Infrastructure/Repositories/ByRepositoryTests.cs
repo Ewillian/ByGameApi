@@ -1,6 +1,5 @@
-﻿using ByGameApi.Domain.Abstractions;
-using ByGameApi.Domain.Dao;
-using ByGameApi.Domain.Services;
+﻿using ByGameApi.Domain.Dao;
+using ByGameApi.Infrastructure.Abstractions;
 using ByGameApi.Infrastructure.Options;
 using ByGameApi.Infrastructure.Repositories;
 
@@ -15,19 +14,47 @@ namespace ByGameApi.Infrastructure.Tests.Unit.Repositories;
 
 public class ByRepositoryTests
 {
+    private readonly Mock<ILogger<ByRepository>> _loggerMock;
+    private readonly Mock<IDbCommandExecutor> _commandExecutorMock;
+    private readonly DatabaseOptions _databaseOptions;
+    private readonly ByRepository _byRepository;
+
+    public ByRepositoryTests()
+    {
+        _loggerMock = new Mock<ILogger<ByRepository>>();
+        _commandExecutorMock = new Mock<IDbCommandExecutor>();
+        _databaseOptions = new DatabaseOptions
+        {
+            Server = "localhost",
+            Port = "3306",
+            Database = "testdb",
+            User = "root",
+            Password = "password",
+            Table = "Scores",
+            SqlQueryGet = "SELECT * FROM Scores",
+            MinConnectionPoolSize = 10,
+            MaxConnectionPoolSize = 100,
+            ConnectionTimeout = 5000
+        };
+
+        _byRepository = new ByRepository(_loggerMock.Object, _databaseOptions, _commandExecutorMock.Object);
+    }
+
     [Theory]
     [InlineData("logger")]
     [InlineData("options")]
+    [InlineData("commandExecutor")]
     public void Constructor_When_ArgumentIsMissing_Should_ReturnArgumentNullException(string missingElement)
     {
         // Arrange
         ILogger<ByRepository>? logger = missingElement == "logger" ? null : Mock.Of<ILogger<ByRepository>>();
-        IOptions<DatabaseOptions>? databaseOptions = missingElement == "options" ? null : Mock.Of<IOptions<DatabaseOptions>>();
+        IOptions<DatabaseOptions>? databaseOptions = missingElement == "options" ? null : Mock.Of<IOptions<DatabaseOptions>>(opt => opt.Value == _databaseOptions);
+        IDbCommandExecutor? commandExecutor = missingElement == "commandExecutor" ? null : Mock.Of<IDbCommandExecutor>();
 
         // Act & 
         var exception = Assert.Throws<ArgumentNullException>(() =>
         {
-            var byRepository = new ByRepository(logger!, databaseOptions!);
+            var byRepository = new ByRepository(logger!, databaseOptions!, commandExecutor!);
         });
 
         //Assert
@@ -35,48 +62,38 @@ public class ByRepositoryTests
     }
 
     [Fact]
-    public async Task GetScore_WithEmptyPlayerName_ReturnsEmptyScoreDao()
+    public async Task GetUnitaryScore_ShouldReturnScoreDao_WhenPlayerExists()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<ScoreService>>();
-        var repoMock = new Mock<IByRepository>();
-        var service = new ScoreService(loggerMock.Object, repoMock.Object);
+        var expected = new ScoreDao { ScoreId = 1, PlayerName = "Test", Value = 100 };
+
+        _commandExecutorMock.Setup(e => e.ExecuteReaderAsync(It.IsAny<string>()))
+                    .ReturnsAsync(new List<ScoreDao> { expected });
 
         // Act
-        var result = await service.GetScore("");
+        var result = await _byRepository.GetUnitaryScore("Test");
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("", result.PlayerName);
-        repoMock.Verify(x => x.GetUnitaryScore(It.IsAny<string>()), Times.Never);
+        Assert.Equal(expected.PlayerName, result.PlayerName);
+        Assert.Equal(expected.Value, result.Value);
     }
 
     [Fact]
-    public async Task GetScore_WithValidPlayerName_ReturnsScoreDaoFromRepository()
+    public async Task GetUnitaryScore_ShouldReturnEmptyList_WhenPlayerDoesNotExists()
     {
         // Arrange
-        var loggerMock = new Mock<ILogger<ScoreService>>();
-        var repoMock = new Mock<IByRepository>();
+        var expected = new ScoreDao { ScoreId = 1, PlayerName = "Test", Value = 100 };
 
-        var expectedScore = new ScoreDao
-        {
-            ScoreId = 1,
-            PlayerName = "John",
-            Value = 100
-        };
-
-        repoMock.Setup(r => r.GetUnitaryScore("John"))
-                .ReturnsAsync(expectedScore);
-
-        var service = new ScoreService(loggerMock.Object, repoMock.Object);
+        _commandExecutorMock.Setup(e => e.ExecuteReaderAsync(It.IsAny<string>()))
+                    .ReturnsAsync(new List<ScoreDao>());
 
         // Act
-        var result = await service.GetScore("John");
+        var result = await _byRepository.GetUnitaryScore("Test");
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("John", result.PlayerName);
-        Assert.Equal(100, result.Value);
-        repoMock.Verify(x => x.GetUnitaryScore("John"), Times.Once);
+        Assert.Equal(0, result.ScoreId);
+        Assert.Empty(result.PlayerName);
+        Assert.Equal(0, result.Value);
     }
 }

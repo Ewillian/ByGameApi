@@ -2,6 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 
 using ByGameApi.Domain.Abstractions;
 using ByGameApi.Domain.Services;
+using ByGameApi.Infrastructure.Abstractions;
+using ByGameApi.Infrastructure.Factories;
 using ByGameApi.Infrastructure.Options;
 using ByGameApi.Infrastructure.Repositories;
 
@@ -16,6 +18,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<DatabaseOptions>(builder.Configuration.GetSection("DatabaseOptions"));
 
+builder.Services.AddScoped<IDbConnectionFactory, MySqlConnectionFactory>();
+builder.Services.AddScoped<IDbCommandExecutor, IDbCommandExecutor>();
 builder.Services.AddScoped<IByRepository, ByRepository>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 
