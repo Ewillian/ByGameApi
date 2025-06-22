@@ -55,7 +55,7 @@ public class ScoreCommand
     /// <returns></returns>
     private static bool ContainsSuspiciousSqlChars(string input)
     {
-        return Regex.IsMatch(input, @"['"";\\-]{1,}");
+        return Regex.IsMatch(input, @"['"";\\-]{1,}", RegexOptions.None, TimeSpan.FromMilliseconds(100));
     }
 
     /// <summary>
