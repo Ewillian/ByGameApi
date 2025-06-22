@@ -13,7 +13,7 @@ public class MySqlConnectionFactory : IDbConnectionFactory
 
     public MySqlConnectionFactory(IOptions<DatabaseOptions> options)
     {
-        _options = options.Value;
+        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
     /// <inheritdoc />

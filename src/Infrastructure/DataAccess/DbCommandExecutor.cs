@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ByGameApi.Infrastructure.DataAccess;
 
+[ExcludeFromCodeCoverage]
 public class DbCommandExecutor : IDbCommandExecutor
 {
     /// <summary>
@@ -25,7 +26,6 @@ public class DbCommandExecutor : IDbCommandExecutor
         _logger = logger;
     }
 
-    [ExcludeFromCodeCoverage]
     public async Task<IEnumerable<ScoreDao>> ExecuteReaderAsync(string query)
     {
         var connection = _connectionFactory.CreateConnection();

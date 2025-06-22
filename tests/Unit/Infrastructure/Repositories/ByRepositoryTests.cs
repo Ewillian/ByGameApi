@@ -51,7 +51,7 @@ public class ByRepositoryTests
         IOptions<DatabaseOptions>? databaseOptions = missingElement == "options" ? null : Mock.Of<IOptions<DatabaseOptions>>(opt => opt.Value == _databaseOptions);
         IDbCommandExecutor? commandExecutor = missingElement == "commandExecutor" ? null : Mock.Of<IDbCommandExecutor>();
 
-        // Act & 
+        // Act
         var exception = Assert.Throws<ArgumentNullException>(() =>
         {
             var byRepository = new ByRepository(logger!, databaseOptions!, commandExecutor!);
