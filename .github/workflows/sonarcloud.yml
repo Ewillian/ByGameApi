@@ -75,7 +75,7 @@ jobs:
       - name: Send Discord Notification
         run: |
           STATUS="✅ Build succeeded!"
-          if [ "${{ needs.buildForAllSupportedPlatforms.result }}" != "success" ]; then
+          if [ "${{ needs.sonarcloud.result }}" != "success" ]; then
             STATUS="❌ Build failed!"
           fi
 
