@@ -41,7 +41,7 @@ app.MapControllers();
 app.Run();
 
 #pragma warning disable S3903
-namespace Cds.ProductReferentialSystemTesting.Api
+namespace ByGameApi.Api
 {
     [ExcludeFromCodeCoverage]
     public class Program
