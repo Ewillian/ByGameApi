@@ -19,11 +19,15 @@ public class ScoreService : IScoreService
 
     public async Task<ScoreDao> GetScore(string playerName)
     {
-        if (playerName.IsNullOrEmpty())
-        {
-            return new ScoreDao { PlayerName = "" };
-        }
+        if (playerName.IsNullOrEmpty()){ return new ScoreDao { PlayerName = "" }; }
 
         return await _byRepository.GetUnitaryScore(playerName);
+    }
+
+    public async Task<IEnumerable<ScoreDao>> GetTopScore(int scoreCount)
+    {
+        if (scoreCount < 0) { return []; }
+
+        return await _byRepository.GetHighestScores(scoreCount);
     }
 }

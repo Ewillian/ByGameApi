@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
+using static System.Formats.Asn1.AsnWriter;
+
 namespace ByGameApi.Infrastructure.Repositories;
 
 public class ByRepository : IByRepository
@@ -41,17 +43,24 @@ public class ByRepository : IByRepository
     }
 
     /// <inheritdoc />
-    public async Task<ScoreDao> GetUnitaryScore(string PlayerName)
+    public async Task<ScoreDao> GetUnitaryScore(string playerName)
     {
-        var result = await _commandExecutor.ExecuteReaderAsync($"{_options.SqlQueryGet} WHERE PlayerName = '{PlayerName}' LIMIT 1;");
+        if (string.IsNullOrWhiteSpace(playerName))
+            return new ScoreDao();
+
+        var result = await _commandExecutor.ExecuteReaderAsync($"{_options.SqlQueryGet} WHERE PlayerName = '{playerName}' LIMIT 1;");
 
         return result.IsNullOrEmpty() ? new ScoreDao() : result.FirstOrDefault()!;
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ScoreDao>> GetHighestScores(int ScoreCount)
+    public async Task<IEnumerable<ScoreDao>> GetHighestScores(int scoreCount)
     {
-        return null;
+        if(scoreCount < 0) {  return []; }
+
+        var result = await _commandExecutor.ExecuteReaderAsync($"SELECT * FROM Scores ORDER BY Value DESC LIMIT {scoreCount};");
+
+        return result;
     }
 
     /// <inheritdoc />

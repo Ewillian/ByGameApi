@@ -104,5 +104,60 @@ namespace ByGameApi.Api.Controllers
                 Score = sqlResult
             });
         }
+
+        [ProducesResponseType(typeof(ScoreResponse), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.Forbidden)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        [HttpGet(template: "top/{scoreCount}", Name = nameof(GetTopScore))]
+        public async Task<IActionResult> GetTopScore([FromQuery] int scoreNumber = 10)
+        {
+            _logger.LogInformation("Request received");
+
+            if (scoreNumber <= 0)
+            {
+                _logger.LogInformation("BadRequest");
+                return StatusCode(StatusCodes.Status400BadRequest, new ErrorResponse
+                {
+                    Title = "BadRequest",
+                    Description = "The request was not processed because it lacked required data.",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+            IEnumerable<ScoreDao> sqlResult = [];
+
+            try
+            {
+                sqlResult = await _scoreService.GetTopScore(scoreNumber);
+            }
+            catch (Exception)
+            {
+                _logger.LogInformation("InternalServerError");
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                {
+                    Title = "InternalServerError",
+                    Description = "Somethin went wrong or is not handle by the service.",
+                    Status = StatusCodes.Status500InternalServerError
+                });
+            }
+
+            if (sqlResult.IsNullOrEmpty())
+            {
+                return StatusCode(StatusCodes.Status404NotFound, new ErrorResponse
+                {
+                    Title = "NotFound",
+                    Description = "The requested score was not found.",
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
+
+            return StatusCode(StatusCodes.Status200OK, new TopScoreResponse
+            {
+                Score = sqlResult
+            });
+        }
     }
 }
