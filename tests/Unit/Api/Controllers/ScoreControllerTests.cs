@@ -62,15 +62,13 @@ public class ScoreControllerTests
     public async Task GetScore_When_ScoreIsFound_Should_Return200()
     {
         // Arrange
-        var scoreCommand = new ScoreCommand { PlayerName = "TestPlayer" };
-
         var expectedDao = new ScoreDao { PlayerName = "TestPlayer", Value = 42 };
         _scoreServiceMock
             .Setup(s => s.GetScore("TestPlayer"))
             .ReturnsAsync(expectedDao);
 
         // Act
-        var result = await _controller.GetScore(scoreCommand);
+        var result = await _controller.GetScore("TestPlayer");
 
         // Assert
         var objectResult = Assert.IsType<ObjectResult>(result);
@@ -86,11 +84,8 @@ public class ScoreControllerTests
     [InlineData("Select", "Forbidden", StatusCodes.Status403Forbidden)]
     public async Task GetScore_When_ValidationFails_Should_ReturnExpectedErrorResponse(string playerName, string expectedErrorTitle, int expectedStatus)
     {
-        // Arrange
-        var scoreCommand = new ScoreCommand { PlayerName = playerName };
-
-        // Act
-        var result = await _controller.GetScore(scoreCommand);
+        // Arrange & Act
+        var result = await _controller.GetScore(playerName);
 
         // Assert
         var objectResult = Assert.IsType<ObjectResult>(result);
@@ -106,8 +101,6 @@ public class ScoreControllerTests
     public async Task GetScore_When_ScoreIsNotFound_Should_Return404(string expectedErrorTitle, int expectedStatus)
     {
         // Arrange
-        var scoreCommand = new ScoreCommand { PlayerName = "TestPlayer" };
-
         if (expectedStatus == 404)
         {
             _scoreServiceMock
@@ -122,7 +115,7 @@ public class ScoreControllerTests
         }
 
         // Act
-        var result = await _controller.GetScore(scoreCommand);
+        var result = await _controller.GetScore("TestPlayer");
 
         // Assert
         var objectResult = Assert.IsType<ObjectResult>(result);
