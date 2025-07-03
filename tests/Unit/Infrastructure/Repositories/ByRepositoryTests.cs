@@ -97,6 +97,21 @@ public class ByRepositoryTests
         Assert.Equal(0, result.Value);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    public async Task GetUnitaryScore_When_PlayerNameIsNullOrEmpty_Should_ReturnEmptyScoreDao(string playerName)
+    {
+        // Arrange & Act
+        var result = await _byRepository.GetUnitaryScore(playerName);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(0, result.ScoreId);
+        Assert.Empty(result.PlayerName);
+        Assert.Equal(0, result.Value);
+    }
+
     [Fact]
     public async Task GetHighestScores_When_ScoreCountIsNegative_Should_ReturnEmptyList()
     {
