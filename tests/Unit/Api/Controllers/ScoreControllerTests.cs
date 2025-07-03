@@ -21,6 +21,7 @@ public class ScoreControllerTests
     private readonly Mock<ILogger<ScoreController>> _loggerMock;
     private readonly Mock<IScoreService> _scoreServiceMock;
     private readonly ScoreController _controller;
+    private readonly DateTime _scoreDate = new(2024, 01, 01, 12, 00, 00);
     #endregion Fields
 
     #region Constructors
@@ -62,7 +63,7 @@ public class ScoreControllerTests
     public async Task GetScore_When_ScoreIsFound_Should_Return200()
     {
         // Arrange
-        var expectedDao = new ScoreDao { PlayerName = "TestPlayer", Value = 42 };
+        var expectedDao = new ScoreDao { ScoreId = 0, PlayerName = "John", Value = 100, Date = _scoreDate };
         _scoreServiceMock
             .Setup(s => s.GetScore("TestPlayer"))
             .ReturnsAsync(expectedDao);
@@ -75,8 +76,10 @@ public class ScoreControllerTests
         Assert.Equal(StatusCodes.Status200OK, objectResult.StatusCode);
 
         var scoreResponse = Assert.IsType<ScoreResponse>(objectResult.Value);
+        Assert.Equal(expectedDao.ScoreId, scoreResponse.Score.ScoreId);
         Assert.Equal(expectedDao.PlayerName, scoreResponse.Score.PlayerName);
         Assert.Equal(expectedDao.Value, scoreResponse.Score.Value);
+        Assert.Equal(expectedDao.Date, scoreResponse.Score.Date);
     }
 
     [Theory]
@@ -125,6 +128,74 @@ public class ScoreControllerTests
         Assert.Equal(expectedErrorTitle, error.Title);
     }
 
-    #endregion Public methods
+    [Fact]
+    public async Task GetTopScore_When_ScoresAreFound_Should_Return200()
+    {
+        // Arrange
+        var scores = new List<ScoreDao> { new() { ScoreId = 0, PlayerName = "John", Value = 100, Date = _scoreDate } };
 
+        _scoreServiceMock
+            .Setup(s => s.GetTopScore(10))
+            .ReturnsAsync(scores);
+
+        // Act
+        var result = await _controller.GetTopScore();
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status200OK, objectResult.StatusCode);
+
+        var scoreResponse = Assert.IsType<TopScoreResponse>(objectResult.Value);
+
+        for (int i = 0; i < scoreResponse.Scores.Count(); i++)
+        {
+            Assert.Equal(scores[i].ScoreId, scoreResponse.Scores.ElementAt(i).ScoreId);
+            Assert.Equal(scores[i].PlayerName, scoreResponse.Scores.ElementAt(i).PlayerName);
+            Assert.Equal(scores[i].Value, scoreResponse.Scores.ElementAt(i).Value);
+            Assert.Equal(scores[i].Date, scoreResponse.Scores.ElementAt(i).Date);
+        }
+    }
+
+    [Fact]
+    public async Task GetTopScore_ReturnsBadRequest_WhenScoreNumberIsZero()
+    {
+        // Act
+        var result = await _controller.GetTopScore(0);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, objectResult.StatusCode);
+        Assert.IsType<ErrorResponse>(objectResult.Value);
+    }
+
+    [Fact]
+    public async Task GetTopScore_ReturnsNotFound_WhenNoScoresExist()
+    {
+        // Arrange
+        _scoreServiceMock.Setup(s => s.GetTopScore(10)).ReturnsAsync(new List<ScoreDao>());
+
+        // Act
+        var result = await _controller.GetTopScore();
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status404NotFound, objectResult.StatusCode);
+        Assert.IsType<ErrorResponse>(objectResult.Value);
+    }
+
+    [Fact]
+    public async Task GetTopScore_ReturnsInternalServerError_OnException()
+    {
+        // Arrange
+        _scoreServiceMock.Setup(s => s.GetTopScore(It.IsAny<int>())).ThrowsAsync(new Exception());
+
+        // Act
+        var result = await _controller.GetTopScore();
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
+    }
+
+    #endregion Public methods
 }

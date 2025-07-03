@@ -100,7 +100,6 @@ namespace ByGameApi.Api.Controllers
 
             return StatusCode(StatusCodes.Status200OK, new ScoreResponse
             {
-                Status = StatusCodes.Status200OK,
                 Score = sqlResult
             });
         }
@@ -155,7 +154,7 @@ namespace ByGameApi.Api.Controllers
 
             return StatusCode(StatusCodes.Status200OK, new TopScoreResponse
             {
-                Score = sqlResult
+                Scores = sqlResult
             });
         }
     }

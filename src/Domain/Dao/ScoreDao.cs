@@ -8,15 +8,15 @@ namespace ByGameApi.Domain.Dao;
 public class ScoreDao
 {
     [JsonProperty("scoreId")]
-    public int ScoreId { get; set; }
+    public int ScoreId { get; init; }
 
     [JsonProperty("playerName")]
-    public string PlayerName { get; set; } = "";
+    public string PlayerName { get; init; } = "";
 
     [JsonProperty("value")]
-    public int Value { get; set; }
+    public int Value { get; init; }
 
     [JsonProperty("date")]
-    public DateTime Date { get; private set; }
+    public DateTime Date { get; init; }
 }
 

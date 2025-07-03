@@ -7,6 +7,5 @@ namespace ByGameApi.Api.Responses;
 [ExcludeFromCodeCoverage]
 public class ScoreResponse
 {
-    public int Status { get; init; }
     public required ScoreDao Score { get; init; }
 }

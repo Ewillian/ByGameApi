@@ -7,5 +7,5 @@ namespace ByGameApi.Api.Responses;
 [ExcludeFromCodeCoverage]
 public class TopScoreResponse
 {
-    public required IEnumerable<ScoreDao> Score { get; init; }
+    public required IEnumerable<ScoreDao> Scores { get; init; }
 }
