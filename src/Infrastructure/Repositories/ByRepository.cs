@@ -3,11 +3,8 @@ using ByGameApi.Domain.Dao;
 using ByGameApi.Infrastructure.Abstractions;
 using ByGameApi.Infrastructure.Options;
 
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-
-using static System.Formats.Asn1.AsnWriter;
 
 namespace ByGameApi.Infrastructure.Repositories;
 

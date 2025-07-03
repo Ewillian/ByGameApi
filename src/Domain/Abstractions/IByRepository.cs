@@ -9,7 +9,7 @@ public interface IByRepository
     /// </summary>
     /// <param name="PlayerName">The player name</param>
     /// <returns>An asynchronous task containing a collection of <see cref="ScoreDao"/> representing the top scores.</returns>
-    Task<ScoreDao> GetUnitaryScore(string PlayerName);
+    Task<ScoreDao> GetUnitaryScore(string playerName);
 
     /// <summary>
     /// Retrieves the top scores, ordered from highest to lowest.
@@ -18,7 +18,7 @@ public interface IByRepository
     /// <returns>
     /// An asynchronous task containing a collection of <see cref="ScoreDao"/> representing the top scores.
     /// </returns>
-    Task<IEnumerable<ScoreDao>> GetHighestScores(int ScoreCount);
+    Task<IEnumerable<ScoreDao>> GetHighestScores(int scoreCount);
 
     /// <summary>
     /// Updates the score with a high one for a specific player

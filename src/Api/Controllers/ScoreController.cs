@@ -13,7 +13,7 @@ namespace ByGameApi.Api.Controllers
 {
     [ApiController]
     [Route("score")]
-    public class ScoreController : Controller
+    public class ScoreController : ControllerBase
     {
         #region Private fields
         private readonly ILogger<ScoreController> _logger;
@@ -125,15 +125,28 @@ namespace ByGameApi.Api.Controllers
                 });
             }
 
-            IEnumerable<ScoreDao> sqlResult = [];
-
             try
             {
-                sqlResult = await _scoreService.GetTopScore(scoreNumber);
+                var sqlResult = await _scoreService.GetTopScore(scoreNumber);
+
+                if (sqlResult.IsNullOrEmpty())
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new ErrorResponse
+                    {
+                        Title = "NotFound",
+                        Description = "The requested score was not found.",
+                        Status = StatusCodes.Status404NotFound
+                    });
+                }
+
+                return StatusCode(StatusCodes.Status200OK, new TopScoreResponse
+                {
+                    Scores = sqlResult
+                });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                _logger.LogInformation("InternalServerError");
+                _logger.LogInformation($"InternalServerError {ex.Message} {ex.StackTrace}");
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                 {
                     Title = "InternalServerError",
@@ -141,21 +154,6 @@ namespace ByGameApi.Api.Controllers
                     Status = StatusCodes.Status500InternalServerError
                 });
             }
-
-            if (sqlResult.IsNullOrEmpty())
-            {
-                return StatusCode(StatusCodes.Status404NotFound, new ErrorResponse
-                {
-                    Title = "NotFound",
-                    Description = "The requested score was not found.",
-                    Status = StatusCodes.Status404NotFound
-                });
-            }
-
-            return StatusCode(StatusCodes.Status200OK, new TopScoreResponse
-            {
-                Scores = sqlResult
-            });
         }
     }
 }

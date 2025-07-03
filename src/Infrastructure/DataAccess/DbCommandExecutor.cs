@@ -52,12 +52,12 @@ public class DbCommandExecutor : IDbCommandExecutor
         }
         catch (System.Exception ex)
         {
-            _logger.LogError($"[DB ERROR] {ex.Message}");
+            _logger.LogError("[DB ERROR] Message: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
             throw;
         }
         finally
         {
-            connection.Close();
+            await connection.CloseAsync();
         }
 
         return results;
