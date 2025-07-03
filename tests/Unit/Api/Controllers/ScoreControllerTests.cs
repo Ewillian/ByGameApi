@@ -157,7 +157,7 @@ public class ScoreControllerTests
     }
 
     [Fact]
-    public async Task GetTopScore_ReturnsBadRequest_WhenScoreNumberIsZero()
+    public async Task GetTopScore_When_ScoreNumberIsZero_Should_ReturnBadRequest()
     {
         // Act
         var result = await _controller.GetTopScore(0);
@@ -169,7 +169,7 @@ public class ScoreControllerTests
     }
 
     [Fact]
-    public async Task GetTopScore_ReturnsNotFound_WhenNoScoresExist()
+    public async Task GetTopScore_When_NoScoresExist_Should_ReturnNotFound()
     {
         // Arrange
         _scoreServiceMock.Setup(s => s.GetTopScore(10)).ReturnsAsync(new List<ScoreDao>());
@@ -184,7 +184,7 @@ public class ScoreControllerTests
     }
 
     [Fact]
-    public async Task GetTopScore_ReturnsInternalServerError_OnException()
+    public async Task GetTopScore_When_OnException_Should_ReturnInternalServerError()
     {
         // Arrange
         _scoreServiceMock.Setup(s => s.GetTopScore(It.IsAny<int>())).ThrowsAsync(new Exception());
