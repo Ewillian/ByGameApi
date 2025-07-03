@@ -12,7 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace ByGameApi.Api.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("score")]
     public class ScoreController : Controller
     {
         #region Private fields
@@ -32,12 +32,12 @@ namespace ByGameApi.Api.Controllers
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.Forbidden)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        [HttpGet(template: "{playerName}", Name = nameof(GetScore))]
-        public async Task<IActionResult> GetScore([Required][FromHeader] ScoreCommand scoreCommand)
+        [HttpGet("unitary", Name = nameof(GetScore))]
+        public async Task<IActionResult> GetScore([Required][FromQuery] string playerName)
         {
             _logger.LogInformation("Request received");
 
-            scoreCommand ??= new ScoreCommand();
+            ScoreCommand scoreCommand = new() { PlayerName = playerName };
 
             switch (scoreCommand.IsValid())
             {
@@ -108,10 +108,9 @@ namespace ByGameApi.Api.Controllers
         [ProducesResponseType(typeof(ScoreResponse), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.Forbidden)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        [HttpGet(template: "top/{scoreCount}", Name = nameof(GetTopScore))]
+        [HttpGet("top", Name = nameof(GetTopScore))]
         public async Task<IActionResult> GetTopScore([FromQuery] int scoreNumber = 10)
         {
             _logger.LogInformation("Request received");
