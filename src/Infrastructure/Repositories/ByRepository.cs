@@ -14,11 +14,6 @@ namespace ByGameApi.Infrastructure.Repositories;
 public class ByRepository : IByRepository
 {
     /// <summary>
-    /// 
-    /// </summary>
-    private readonly ILogger<ByRepository> _logger;
-
-    /// <summary>
     /// The database options
     /// </summary>
     private readonly DatabaseOptions _options;
@@ -35,9 +30,8 @@ public class ByRepository : IByRepository
     /// <param name="options"></param>
     /// <param name="commandExecutor"></param>
     /// <exception cref="ArgumentNullException"></exception>
-    public ByRepository(ILogger<ByRepository> logger, IOptions<DatabaseOptions> options, IDbCommandExecutor commandExecutor)
+    public ByRepository(IOptions<DatabaseOptions> options, IDbCommandExecutor commandExecutor)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _commandExecutor = commandExecutor ?? throw new ArgumentNullException(nameof(commandExecutor));
     }

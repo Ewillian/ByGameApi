@@ -3,7 +3,6 @@ using ByGameApi.Infrastructure.Abstractions;
 using ByGameApi.Infrastructure.Options;
 using ByGameApi.Infrastructure.Repositories;
 
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using Moq;
@@ -14,14 +13,12 @@ namespace ByGameApi.Infrastructure.Tests.Unit.Repositories;
 
 public class ByRepositoryTests
 {
-    private readonly Mock<ILogger<ByRepository>> _loggerMock;
     private readonly Mock<IDbCommandExecutor> _commandExecutorMock;
     private readonly DatabaseOptions _databaseOptions;
     private readonly ByRepository _byRepository;
 
     public ByRepositoryTests()
     {
-        _loggerMock = new Mock<ILogger<ByRepository>>();
         _commandExecutorMock = new Mock<IDbCommandExecutor>();
         _databaseOptions = new DatabaseOptions
         {
@@ -37,24 +34,22 @@ public class ByRepositoryTests
             ConnectionTimeout = 5000
         };
 
-        _byRepository = new ByRepository(_loggerMock.Object, _databaseOptions, _commandExecutorMock.Object);
+        _byRepository = new ByRepository(_databaseOptions, _commandExecutorMock.Object);
     }
 
     [Theory]
-    [InlineData("logger")]
     [InlineData("options")]
     [InlineData("commandExecutor")]
     public void Constructor_When_ArgumentIsMissing_Should_ReturnArgumentNullException(string missingElement)
     {
         // Arrange
-        ILogger<ByRepository>? logger = missingElement == "logger" ? null : Mock.Of<ILogger<ByRepository>>();
         IOptions<DatabaseOptions>? databaseOptions = missingElement == "options" ? null : Mock.Of<IOptions<DatabaseOptions>>(opt => opt.Value == _databaseOptions);
         IDbCommandExecutor? commandExecutor = missingElement == "commandExecutor" ? null : Mock.Of<IDbCommandExecutor>();
 
         // Act
         var exception = Assert.Throws<ArgumentNullException>(() =>
         {
-            var byRepository = new ByRepository(logger!, databaseOptions!, commandExecutor!);
+            var byRepository = new ByRepository(databaseOptions!, commandExecutor!);
         });
 
         //Assert

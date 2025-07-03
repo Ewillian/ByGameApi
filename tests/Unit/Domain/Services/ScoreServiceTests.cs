@@ -2,8 +2,6 @@
 using ByGameApi.Domain.Dao;
 using ByGameApi.Domain.Services;
 
-using Microsoft.Extensions.Logging;
-
 using Moq;
 
 using Xunit;
@@ -12,52 +10,49 @@ namespace ByGameApi.Domain.Tests.Unit.Services;
 
 public class ScoreServiceTests
 {
-    [Theory]
-    [InlineData("logger")]
-    [InlineData("byRepository")]
-    public void Constructor_When_ArgumentIsMissing_Should_ReturnArgumentNullException(string missingElement)
+    private readonly Mock<IByRepository> _byRepositoryMock;
+    private readonly ScoreService _scoreService;
+
+    public ScoreServiceTests()
+    {
+        _byRepositoryMock = new();
+        _scoreService = new(_byRepositoryMock.Object);
+    }
+
+    [Fact]
+    public void Constructor_When_ArgumentIsMissing_Should_ReturnArgumentNullException()
     {
         // Arrange
-        ILogger<ScoreService>? logger = missingElement == "logger" ? null : Mock.Of<ILogger<ScoreService>>();
-        IByRepository? service = missingElement == "byRepository" ? null : Mock.Of<IByRepository>();
+        IByRepository? service = null;
 
         // Act & 
         var exception = Assert.Throws<ArgumentNullException>(() =>
         {
-            var scoreService = new ScoreService(logger!, service!);
+            var scoreService = new ScoreService(service!);
         });
 
         //Assert
-        Assert.Equal(missingElement, exception.ParamName);
+        Assert.Equal("byRepository", exception.ParamName);
     }
 
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    public async Task GetScore_WithNullOrEmptyPlayerName_ReturnsEmptyScore(string? invalidName)
+    public async Task GetScore_When_PlayerNameIsNullOrEmpty_Should_ReturnEmptyScore(string? invalidName)
     {
-        // Arrange
-        var mockLogger = new Mock<ILogger<ScoreService>>();
-        var mockRepo = new Mock<IByRepository>();
-
-        var service = new ScoreService(mockLogger.Object, mockRepo.Object);
-
-        // Act
-        var result = await service.GetScore(invalidName!);
+        // Arrange & Act
+        var result = await _scoreService.GetScore(invalidName!);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal("", result.PlayerName);
-        mockRepo.Verify(r => r.GetUnitaryScore(It.IsAny<string>()), Times.Never);
+        _byRepositoryMock.Verify(r => r.GetUnitaryScore(It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
-    public async Task GetScore_ReturnsExpectedScore()
+    public async Task GetScore_When_PlayerExists_Should_ReturnExpectedScore()
     {
         // Arrange
-        var mockLogger = new Mock<ILogger<ScoreService>>();
-        var mockRepo = new Mock<IByRepository>();
-
         var expectedPlayerName = "Player1";
         var expectedScore = new ScoreDao
         {
@@ -65,10 +60,10 @@ public class ScoreServiceTests
             Value = 100
         };
 
-        mockRepo.Setup(r => r.GetUnitaryScore(expectedPlayerName))
+        _byRepositoryMock.Setup(r => r.GetUnitaryScore(expectedPlayerName))
                 .ReturnsAsync(expectedScore);
 
-        var service = new ScoreService(mockLogger.Object, mockRepo.Object);
+        var service = new ScoreService(_byRepositoryMock.Object);
 
         // Act
         var result = await service.GetScore(expectedPlayerName);
@@ -77,5 +72,38 @@ public class ScoreServiceTests
         Assert.NotNull(result);
         Assert.Equal(expectedPlayerName, result.PlayerName);
         Assert.Equal(100, result.Value);
+    }
+
+    [Fact]
+    public async Task GetTopScore_When_ScoreCountIsNegative_Should_ReturnEmptyList()
+    {
+        // Arrange & Act
+        var result = await _scoreService.GetTopScore(-1);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetTopScore_When_ValidScoreCountProvided_Should_ReturnScores()
+    {
+        // Arrange
+        var expectedScores = new List<ScoreDao>
+    {
+        new ScoreDao { ScoreId = 1, PlayerName = "Player1", Value = 100 },
+        new ScoreDao { ScoreId = 2, PlayerName = "Player2", Value = 90 }
+    };
+
+        _byRepositoryMock.Setup(r => r.GetHighestScores(2))
+                         .ReturnsAsync(expectedScores);
+
+        // Act
+        var result = await _scoreService.GetTopScore(2);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Count());
+        Assert.Equal("Player1", result.First().PlayerName);
     }
 }
