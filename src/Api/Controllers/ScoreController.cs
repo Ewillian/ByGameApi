@@ -81,7 +81,7 @@ namespace ByGameApi.Api.Controllers
             }
             catch (Exception ex) 
             {
-                _logger.LogInformation("{errorTitle} {message} {stackTrace}", Constants.InternalErrorTitle, ex.Message, ex.StackTrace);
+                _logger.LogError(ex, "{errorTitle}", Constants.InternalErrorTitle);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                 {
                     Title = Constants.InternalErrorTitle,
@@ -149,7 +149,7 @@ namespace ByGameApi.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("{errorTitle} {message} {stackTrace}", Constants.InternalErrorTitle, ex.Message, ex.StackTrace);
+                _logger.LogError(ex, "{errorTitle}", Constants.InternalErrorTitle);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                 {
                     Title = Constants.InternalErrorTitle,

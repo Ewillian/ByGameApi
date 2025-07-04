@@ -23,7 +23,6 @@ public class ByRepository : IByRepository
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="logger"></param>
     /// <param name="options"></param>
     /// <param name="commandExecutor"></param>
     /// <exception cref="ArgumentNullException"></exception>

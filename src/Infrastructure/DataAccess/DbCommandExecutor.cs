@@ -52,7 +52,7 @@ public class DbCommandExecutor : IDbCommandExecutor
         }
         catch (System.Exception ex)
         {
-            _logger.LogError("[DB ERROR] Message: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
+            _logger.LogError(ex, "[DB ERROR]");
             throw;
         }
         finally
