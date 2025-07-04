@@ -3,6 +3,7 @@ using System.Net;
 
 using ByGameApi.Api.Commands;
 using ByGameApi.Api.Responses;
+using ByGameApi.Domain;
 using ByGameApi.Domain.Abstractions;
 using ByGameApi.Domain.Dao;
 
@@ -35,26 +36,26 @@ namespace ByGameApi.Api.Controllers
         [HttpGet("unitary", Name = nameof(GetScore))]
         public async Task<IActionResult> GetScore([Required][FromQuery] string playerName)
         {
-            _logger.LogInformation("Request received");
+            _logger.LogInformation("Request received: '{playerName}'", playerName);
 
             ScoreCommand scoreCommand = new() { PlayerName = playerName };
 
             switch (scoreCommand.IsValid())
             {
                 case StatusCodes.Status400BadRequest:
-                    _logger.LogInformation("BadRequest");
+                    _logger.LogInformation(Constants.BadRequestTitle);
                     return StatusCode(StatusCodes.Status400BadRequest, new ErrorResponse
                     {
-                        Title = "BadRequest",
-                        Description = "The request was not processed because it lacked required data.",
+                        Title = Constants.BadRequestTitle,
+                        Description = Constants.BadRequestMessage,
                         Status = StatusCodes.Status400BadRequest
                     });
 
                 case StatusCodes.Status403Forbidden:
-                    _logger.LogInformation("Forbidden");
+                    _logger.LogInformation(Constants.ForbiddenTitle);
                     return StatusCode(StatusCodes.Status403Forbidden, new ErrorResponse
                     {
-                        Title = "Forbidden",
+                        Title = Constants.ForbiddenTitle,
                         Description = "The required data contains forbidden elements.",
                         Status = StatusCodes.Status403Forbidden
                     });
@@ -63,11 +64,11 @@ namespace ByGameApi.Api.Controllers
                     break;
 
                 default:
-                    _logger.LogInformation("InternalServerError");
+                    _logger.LogInformation(Constants.InternalErrorTitle);
                     return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                     {
-                        Title = "InternalServerError",
-                        Description = "Somethin went wrong or is not handle by the service.",
+                        Title = Constants.InternalErrorTitle,
+                        Description = Constants.InternalErrorMessage,
                         Status = StatusCodes.Status500InternalServerError
                     });
             }
@@ -80,20 +81,21 @@ namespace ByGameApi.Api.Controllers
             }
             catch (Exception) 
             {
-                _logger.LogInformation("InternalServerError");
+                _logger.LogInformation(Constants.InternalErrorTitle);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                 {
-                    Title = "InternalServerError",
-                    Description = "Somethin went wrong or is not handle by the service.",
+                    Title = Constants.InternalErrorTitle,
+                    Description = Constants.InternalErrorMessage,
                     Status = StatusCodes.Status500InternalServerError
                 });
             }
 
             if (sqlResult.PlayerName.IsNullOrEmpty()) {
+                _logger.LogInformation(Constants.ScoreNotFoundTitle);
                 return StatusCode(StatusCodes.Status404NotFound, new ErrorResponse
                 {
-                    Title = "NotFound",
-                    Description = "The requested score was not found.",
+                    Title = Constants.ScoreNotFoundTitle,
+                    Description = Constants.ScoreNotFoundMessage,
                     Status = StatusCodes.Status404NotFound
                 });
             }
@@ -116,11 +118,11 @@ namespace ByGameApi.Api.Controllers
 
             if (scoreNumber <= 0)
             {
-                _logger.LogInformation("BadRequest");
+                _logger.LogInformation(Constants.BadRequestTitle);
                 return StatusCode(StatusCodes.Status400BadRequest, new ErrorResponse
                 {
-                    Title = "BadRequest",
-                    Description = "The request was not processed because it lacked required data.",
+                    Title = Constants.BadRequestTitle,
+                    Description = Constants.BadRequestMessage,
                     Status = StatusCodes.Status400BadRequest
                 });
             }
@@ -131,10 +133,11 @@ namespace ByGameApi.Api.Controllers
 
                 if (sqlResult.IsNullOrEmpty())
                 {
+                    _logger.LogInformation(Constants.ScoresNotFoundTitle);
                     return StatusCode(StatusCodes.Status404NotFound, new ErrorResponse
                     {
-                        Title = "NotFound",
-                        Description = "The requested score was not found.",
+                        Title = Constants.ScoresNotFoundTitle,
+                        Description = Constants.ScoreNotFoundMessage,
                         Status = StatusCodes.Status404NotFound
                     });
                 }
@@ -146,11 +149,11 @@ namespace ByGameApi.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"InternalServerError {ex.Message} {ex.StackTrace}");
+                _logger.LogInformation("{errorTitle} {message} {stackTrace}", Constants.InternalErrorTitle, ex.Message, ex.StackTrace);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                 {
-                    Title = "InternalServerError",
-                    Description = "Somethin went wrong or is not handle by the service.",
+                    Title = Constants.InternalErrorTitle,
+                    Description = Constants.InternalErrorMessage,
                     Status = StatusCodes.Status500InternalServerError
                 });
             }
