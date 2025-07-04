@@ -3,7 +3,6 @@ using ByGameApi.Infrastructure.Abstractions;
 using ByGameApi.Infrastructure.Options;
 using ByGameApi.Infrastructure.Repositories;
 
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using Moq;
@@ -14,14 +13,12 @@ namespace ByGameApi.Infrastructure.Tests.Unit.Repositories;
 
 public class ByRepositoryTests
 {
-    private readonly Mock<ILogger<ByRepository>> _loggerMock;
     private readonly Mock<IDbCommandExecutor> _commandExecutorMock;
     private readonly DatabaseOptions _databaseOptions;
     private readonly ByRepository _byRepository;
 
     public ByRepositoryTests()
     {
-        _loggerMock = new Mock<ILogger<ByRepository>>();
         _commandExecutorMock = new Mock<IDbCommandExecutor>();
         _databaseOptions = new DatabaseOptions
         {
@@ -37,24 +34,22 @@ public class ByRepositoryTests
             ConnectionTimeout = 5000
         };
 
-        _byRepository = new ByRepository(_loggerMock.Object, _databaseOptions, _commandExecutorMock.Object);
+        _byRepository = new ByRepository(_databaseOptions, _commandExecutorMock.Object);
     }
 
     [Theory]
-    [InlineData("logger")]
     [InlineData("options")]
     [InlineData("commandExecutor")]
     public void Constructor_When_ArgumentIsMissing_Should_ReturnArgumentNullException(string missingElement)
     {
         // Arrange
-        ILogger<ByRepository>? logger = missingElement == "logger" ? null : Mock.Of<ILogger<ByRepository>>();
         IOptions<DatabaseOptions>? databaseOptions = missingElement == "options" ? null : Mock.Of<IOptions<DatabaseOptions>>(opt => opt.Value == _databaseOptions);
         IDbCommandExecutor? commandExecutor = missingElement == "commandExecutor" ? null : Mock.Of<IDbCommandExecutor>();
 
         // Act
         var exception = Assert.Throws<ArgumentNullException>(() =>
         {
-            var byRepository = new ByRepository(logger!, databaseOptions!, commandExecutor!);
+            var byRepository = new ByRepository(databaseOptions!, commandExecutor!);
         });
 
         //Assert
@@ -62,7 +57,7 @@ public class ByRepositoryTests
     }
 
     [Fact]
-    public async Task GetUnitaryScore_ShouldReturnScoreDao_WhenPlayerExists()
+    public async Task GetUnitaryScore_When_PlayerExists_Should_ReturnScoreDao()
     {
         // Arrange
         var expected = new ScoreDao { ScoreId = 1, PlayerName = "Test", Value = 100 };
@@ -79,7 +74,7 @@ public class ByRepositoryTests
     }
 
     [Fact]
-    public async Task GetUnitaryScore_ShouldReturnEmptyList_WhenPlayerDoesNotExists()
+    public async Task GetUnitaryScore_When_PlayerDoesNotExist_Should_ReturnEmptyScoreDao()
     {
         // Arrange
         var expected = new ScoreDao { ScoreId = 1, PlayerName = "Test", Value = 100 };
@@ -95,5 +90,50 @@ public class ByRepositoryTests
         Assert.Equal(0, result.ScoreId);
         Assert.Empty(result.PlayerName);
         Assert.Equal(0, result.Value);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    public async Task GetUnitaryScore_When_PlayerNameIsNullOrEmpty_Should_ReturnEmptyScoreDao(string playerName)
+    {
+        // Arrange & Act
+        var result = await _byRepository.GetUnitaryScore(playerName);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(0, result.ScoreId);
+        Assert.Empty(result.PlayerName);
+        Assert.Equal(0, result.Value);
+    }
+
+    [Fact]
+    public async Task GetHighestScores_When_ScoreCountIsNegative_Should_ReturnEmptyList()
+    {
+        // Arrange & Act
+        var result = await _byRepository.GetHighestScores(-1);
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetHighestScores_When_ValidCountProvided_Should_ReturnScoreList()
+    {
+        // Arrange
+        var expected = new List<ScoreDao>
+        {
+            new() { ScoreId = 0, PlayerName = "John", Value = 100, Date = DateTime.UtcNow }
+        };
+
+        _commandExecutorMock
+            .Setup(exec => exec.ExecuteReaderAsync(It.IsAny<string>()))
+            .ReturnsAsync(expected);
+
+        // Act
+        var result = await _byRepository.GetHighestScores(10);
+
+        // Assert
+        Assert.Equal(expected, result);
     }
 }

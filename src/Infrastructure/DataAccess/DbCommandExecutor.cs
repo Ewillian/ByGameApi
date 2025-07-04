@@ -13,14 +13,14 @@ public class DbCommandExecutor : IDbCommandExecutor
     /// <summary>
     /// The sql connection factory
     /// </summary>
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly IMySqlConnectionFactory _connectionFactory;
 
     /// <summary>
     /// 
     /// </summary>
     private readonly ILogger<DbCommandExecutor> _logger;
 
-    public DbCommandExecutor(IDbConnectionFactory connectionFactory, ILogger<DbCommandExecutor> logger)
+    public DbCommandExecutor(IMySqlConnectionFactory connectionFactory, ILogger<DbCommandExecutor> logger)
     {
         _connectionFactory = connectionFactory;
         _logger = logger;
@@ -52,12 +52,12 @@ public class DbCommandExecutor : IDbCommandExecutor
         }
         catch (System.Exception ex)
         {
-            _logger.LogError($"[DB ERROR] {ex.Message}");
+            _logger.LogError(ex, "[DB ERROR]");
             throw;
         }
         finally
         {
-            connection.Close();
+            await connection.CloseAsync();
         }
 
         return results;

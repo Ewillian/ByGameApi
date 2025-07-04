@@ -5,4 +5,6 @@ namespace ByGameApi.Domain.Abstractions;
 public interface IScoreService
 {
     Task<ScoreDao> GetScore(string playerName);
+
+    Task<IEnumerable<ScoreDao>> GetTopScore(int scoreCount);
 }

@@ -7,7 +7,7 @@ using MySqlConnector;
 
 namespace ByGameApi.Infrastructure.Factories;
 
-public class MySqlConnectionFactory : IDbConnectionFactory
+public class MySqlConnectionFactory : IMySqlConnectionFactory
 {
     private readonly DatabaseOptions _options;
 

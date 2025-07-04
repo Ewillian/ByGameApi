@@ -7,18 +7,18 @@ public interface IByRepository
     /// <summary>
     /// Retrieves a player's scores.
     /// </summary>
-    /// <param name="PlayerName">The player name</param>
+    /// <param name="playerName">The player name</param>
     /// <returns>An asynchronous task containing a collection of <see cref="ScoreDao"/> representing the top scores.</returns>
-    Task<ScoreDao> GetUnitaryScore(string PlayerName);
+    Task<ScoreDao> GetUnitaryScore(string playerName);
 
     /// <summary>
     /// Retrieves the top scores, ordered from highest to lowest.
     /// </summary>
-    /// <param name="ScoreCount">The number of top scores to retrieve.</param>
+    /// <param name="scoreCount">The number of top scores to retrieve.</param>
     /// <returns>
     /// An asynchronous task containing a collection of <see cref="ScoreDao"/> representing the top scores.
     /// </returns>
-    Task<IEnumerable<ScoreDao>> GetHighestScores(int ScoreCount);
+    Task<IEnumerable<ScoreDao>> GetHighestScores(int scoreCount);
 
     /// <summary>
     /// Updates the score with a high one for a specific player

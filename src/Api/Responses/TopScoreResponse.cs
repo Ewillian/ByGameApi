@@ -5,7 +5,7 @@ using ByGameApi.Domain.Dao;
 namespace ByGameApi.Api.Responses;
 
 [ExcludeFromCodeCoverage]
-public class ScoreResponse
+public class TopScoreResponse
 {
-    public required ScoreDao Score { get; init; }
+    public required IEnumerable<ScoreDao> Scores { get; init; }
 }
