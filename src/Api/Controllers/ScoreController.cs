@@ -79,9 +79,9 @@ namespace ByGameApi.Api.Controllers
             {
                 sqlResult = await _scoreService.GetScore(scoreCommand.PlayerName);
             }
-            catch (Exception) 
+            catch (Exception ex) 
             {
-                _logger.LogInformation(Constants.InternalErrorTitle);
+                _logger.LogInformation("{errorTitle} {message} {stackTrace}", Constants.InternalErrorTitle, ex.Message, ex.StackTrace);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                 {
                     Title = Constants.InternalErrorTitle,
