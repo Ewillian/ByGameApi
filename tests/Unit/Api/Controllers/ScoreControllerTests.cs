@@ -1,6 +1,7 @@
 ﻿using ByGameApi.Api.Commands;
 using ByGameApi.Api.Controllers;
 using ByGameApi.Api.Responses;
+using ByGameApi.Domain;
 using ByGameApi.Domain.Abstractions;
 using ByGameApi.Domain.Dao;
 
@@ -99,9 +100,9 @@ public class ScoreControllerTests
     }
 
     [Theory]
-    [InlineData("NotFound", StatusCodes.Status404NotFound)]
-    [InlineData("InternalServerError", StatusCodes.Status500InternalServerError)]
-    public async Task GetScore_When_ScoreIsNotFound_Should_Return404(string expectedErrorTitle, int expectedStatus)
+    [InlineData(Constants.ScoreNotFoundTitle, Constants.ScoreNotFoundMessage, StatusCodes.Status404NotFound)]
+    [InlineData(Constants.InternalErrorTitle, Constants.InternalErrorMessage, StatusCodes.Status500InternalServerError)]
+    public async Task GetScore_When_ScoreIsNotFound_Should_Return404(string expectedErrorTitle,string expectedErrorDesc, int expectedStatus)
     {
         // Arrange
         if (expectedStatus == 404)
@@ -126,6 +127,7 @@ public class ScoreControllerTests
 
         var error = Assert.IsType<ErrorResponse>(objectResult.Value);
         Assert.Equal(expectedErrorTitle, error.Title);
+        Assert.Equal(expectedErrorDesc, error.Description);
     }
 
     [Fact]
@@ -165,7 +167,10 @@ public class ScoreControllerTests
         // Assert
         var objectResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status400BadRequest, objectResult.StatusCode);
-        Assert.IsType<ErrorResponse>(objectResult.Value);
+
+        var error = Assert.IsType<ErrorResponse>(objectResult.Value);
+        Assert.Equal(Constants.BadRequestTitle, error.Title);
+        Assert.Equal(Constants.BadRequestMessage, error.Description);
     }
 
     [Fact]
@@ -180,7 +185,10 @@ public class ScoreControllerTests
         // Assert
         var objectResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status404NotFound, objectResult.StatusCode);
-        Assert.IsType<ErrorResponse>(objectResult.Value);
+
+        var error = Assert.IsType<ErrorResponse>(objectResult.Value);
+        Assert.Equal(Constants.ScoresNotFoundTitle, error.Title);
+        Assert.Equal(Constants.ScoreNotFoundMessage, error.Description);
     }
 
     [Fact]
