@@ -71,7 +71,7 @@ public class DbCommandExecutor : IDbCommandExecutor
     }
 
     /// <inheritdoc />
-    public async Task<bool> ExecuteChangesAsync(string query, ScoreDao parameters)
+    public async Task<bool> ExecuteChangesAsync(string query)
     {
         var connection = _connectionFactory.CreateConnection();
         var affectedRows = 0;
@@ -82,18 +82,6 @@ public class DbCommandExecutor : IDbCommandExecutor
 
             using var command = connection.CreateCommand();
             command.CommandText = query;
-
-            var properties = typeof(ScoreDao).GetProperties();
-
-            foreach (var prop in properties)
-            {
-                var value = prop.GetValue(parameters) ?? DBNull.Value;
-
-                var dbParameter = command.CreateParameter();
-                dbParameter.ParameterName = $"@{prop.Name}";
-                dbParameter.Value = value;
-                command.Parameters.Add(dbParameter);
-            }
 
             affectedRows = await command.ExecuteNonQueryAsync();
         }

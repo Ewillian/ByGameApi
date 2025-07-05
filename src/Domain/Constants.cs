@@ -14,5 +14,4 @@ public static class Constants
     public const string BadRequestMessage = "The request was not processed because it lacked required data.";
     public const string InternalErrorMessage = "Somethin went wrong or is not handle by the service.";
     public const string ScoreNotFoundMessage = "The requested score(s) was not found.";
-
 }

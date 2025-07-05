@@ -2,6 +2,9 @@
 
 namespace ByGameApi.Infrastructure.Abstractions;
 
+/// <summary>
+/// 
+/// </summary>
 public interface IDbCommandExecutor
 {
     /// <summary>
@@ -15,7 +18,6 @@ public interface IDbCommandExecutor
     /// Executes a SQL command that modifies the database (e.g., INSERT, UPDATE).
     /// </summary>
     /// <param name="query">The SQL query to execute.</param>
-    /// <param name="parameters">The <see cref="ScoreDao"/> object containing the parameters to bind to the SQL query.</param>
     /// <returns>A task that represents the asynchronous operation. The task result is <c>true</c> if the operation completed successfully.</returns>
-    Task<bool> ExecuteChangesAsync(string query, ScoreDao parameters);
+    Task<bool> ExecuteChangesAsync(string query);
 }

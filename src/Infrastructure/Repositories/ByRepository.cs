@@ -3,6 +3,7 @@ using ByGameApi.Domain.Dao;
 using ByGameApi.Infrastructure.Abstractions;
 using ByGameApi.Infrastructure.Options;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -10,6 +11,11 @@ namespace ByGameApi.Infrastructure.Repositories;
 
 public class ByRepository : IByRepository
 {
+    /// <summary>
+    /// The <see cref="ILogger"/> for <see cref="ByRepository"/>
+    /// </summary>
+    private readonly ILogger<ByRepository> _logger;
+
     /// <summary>
     /// The database options
     /// </summary>
@@ -26,8 +32,9 @@ public class ByRepository : IByRepository
     /// <param name="options"></param>
     /// <param name="commandExecutor"></param>
     /// <exception cref="ArgumentNullException"></exception>
-    public ByRepository(IOptions<DatabaseOptions> options, IDbCommandExecutor commandExecutor)
+    public ByRepository(ILogger<ByRepository> logger, IOptions<DatabaseOptions> options, IDbCommandExecutor commandExecutor)
     {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _commandExecutor = commandExecutor ?? throw new ArgumentNullException(nameof(commandExecutor));
     }
@@ -48,9 +55,7 @@ public class ByRepository : IByRepository
     {
         if(scoreCount < 0) {  return []; }
 
-        var result = await _commandExecutor.ExecuteReaderAsync($"SELECT * FROM Scores ORDER BY Value DESC LIMIT {scoreCount};");
-
-        return result;
+        return await _commandExecutor.ExecuteReaderAsync($"SELECT * FROM Scores ORDER BY Value DESC LIMIT {scoreCount};");
     }
 
     /// <inheritdoc />
@@ -62,7 +67,19 @@ public class ByRepository : IByRepository
     /// <inheritdoc />
     public async Task<bool> InsertUnitaryScore(ScoreDao score)
     {
-        return false;
-    }
+        if (score.IsNotValid())
+        {
+            _logger.LogError("[InsertUnitaryScore: ScoreDao IsNotValid] ");
+            return false;
+        }
 
+        var isRowAffected = await _commandExecutor.ExecuteChangesAsync($"INSERT INTO Scores (PlayerName, Value, Date) VALUES ({score.PlayerName}, {score.Value}, {score.Date});");
+
+        if (!isRowAffected)
+        {
+            _logger.LogWarning("[InsertUnitaryScore] No rows affected");
+        }
+
+        return isRowAffected;
+    }
 }
