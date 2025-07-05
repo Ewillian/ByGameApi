@@ -11,21 +11,28 @@ namespace ByGameApi.Infrastructure.DataAccess;
 public class DbCommandExecutor : IDbCommandExecutor
 {
     /// <summary>
+    /// The <see cref="ILogger"/> for <see cref="DbCommandExecutor"/>
+    /// </summary>
+    private readonly ILogger<DbCommandExecutor> _logger;
+
+    /// <summary>
     /// The sql connection factory
     /// </summary>
     private readonly IMySqlConnectionFactory _connectionFactory;
 
     /// <summary>
-    /// 
+    /// Initializes a new instance of the <see cref="DbCommandExecutor"/> class,
+    /// used to execute database commands through a provided MySQL connection factory.
     /// </summary>
-    private readonly ILogger<DbCommandExecutor> _logger;
-
-    public DbCommandExecutor(IMySqlConnectionFactory connectionFactory, ILogger<DbCommandExecutor> logger)
+    /// <param name="logger">The logger used to log database operations and errors.</param>
+    /// <param name="connectionFactory">The factory responsible for creating MySQL database connections.</param>
+    public DbCommandExecutor(ILogger<DbCommandExecutor> logger, IMySqlConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task<IEnumerable<ScoreDao>> ExecuteReaderAsync(string query)
     {
         var connection = _connectionFactory.CreateConnection();
@@ -52,7 +59,7 @@ public class DbCommandExecutor : IDbCommandExecutor
         }
         catch (System.Exception ex)
         {
-            _logger.LogError(ex, "[DB ERROR]");
+            _logger.LogError(ex, "[DB ERROR]: ExecuteReaderAsync");
             throw;
         }
         finally
@@ -61,5 +68,45 @@ public class DbCommandExecutor : IDbCommandExecutor
         }
 
         return results;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ExecuteChangesAsync(string query, ScoreDao parameters)
+    {
+        var connection = _connectionFactory.CreateConnection();
+        var affectedRows = 0;
+
+        try
+        {
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = query;
+
+            var properties = typeof(ScoreDao).GetProperties();
+
+            foreach (var prop in properties)
+            {
+                var value = prop.GetValue(parameters) ?? DBNull.Value;
+
+                var dbParameter = command.CreateParameter();
+                dbParameter.ParameterName = $"@{prop.Name}";
+                dbParameter.Value = value;
+                command.Parameters.Add(dbParameter);
+            }
+
+            affectedRows = await command.ExecuteNonQueryAsync();
+        }
+        catch (System.Exception ex)
+        {
+            _logger.LogError(ex, "[DB ERROR: ExecuteUpdaterAsync]");
+            throw;
+        }
+        finally
+        {
+            await connection.CloseAsync();
+        }
+
+        return affectedRows > 0;
     }
 }

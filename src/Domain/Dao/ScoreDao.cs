@@ -18,5 +18,23 @@ public class ScoreDao
 
     [JsonProperty("date")]
     public DateTime Date { get; init; }
+
+    public bool IsNotValid(out string? error)
+    {
+        if (string.IsNullOrWhiteSpace(PlayerName))
+        {
+            error = "Player name is required.";
+            return false;
+        }
+
+        if (Value < 0)
+        {
+            error = "Score value must be non-negative.";
+            return false;
+        }
+
+        error = null;
+        return true;
+    }
 }
 
