@@ -1,5 +1,8 @@
-﻿using ByGameApi.Domain.Abstractions;
+﻿using System.Reflection.Metadata.Ecma335;
+
+using ByGameApi.Domain.Abstractions;
 using ByGameApi.Domain.Dao;
+using ByGameApi.Domain.Enums;
 
 using Microsoft.IdentityModel.Tokens;
 
@@ -42,13 +45,33 @@ public class ScoreService : IScoreService
     }
 
     /// <inheritdoc />
-    public async Task<bool> InsertUnitaryScore(ScoreDao score)
+    public async Task<ScoreUpsertResult> UpsertUnitaryScore(string playerName, int scoreValue)
     {
-        if (score.IsNotValid())
+        if (playerName.IsNullOrEmpty() || scoreValue <= 0)
         {
-            return false;
+            return ScoreUpsertResult.None;
         }
 
-        return await _byRepository.InsertUnitaryScore(score);
+        var existingScore = await _byRepository.GetUnitaryScore(playerName);
+
+        var scoreToSave = new ScoreDao
+        {
+            PlayerName = playerName,
+            Value = scoreValue,
+            Date = DateTime.UtcNow
+        };
+
+        bool operationSucceeded = existingScore == null
+            ? await _byRepository.InsertUnitaryScore(scoreToSave)
+            : await _byRepository.UpdateUnitaryScore(scoreToSave);
+
+        if (!operationSucceeded)
+        {
+            return ScoreUpsertResult.None;
+        }
+
+        return existingScore == null
+            ? ScoreUpsertResult.Inserted
+            : ScoreUpsertResult.Updated;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using ByGameApi.Domain.Dao;
+using ByGameApi.Domain.Enums;
 
 namespace ByGameApi.Domain.Abstractions;
 
@@ -21,7 +22,8 @@ public interface IScoreService
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="score"></param>
+    /// <param name="playerName"></param>
+    /// <param name="scoreValue"></param>
     /// <returns></returns>
-    Task<bool> InsertUnitaryScore(ScoreDao score);
+    Task<ScoreUpsertResult> UpsertUnitaryScore(string playerName, int scoreValue);
 }

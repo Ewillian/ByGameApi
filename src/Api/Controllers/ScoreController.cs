@@ -1,11 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 
+using Azure;
+
 using ByGameApi.Api.Commands;
 using ByGameApi.Api.Responses;
 using ByGameApi.Domain;
 using ByGameApi.Domain.Abstractions;
 using ByGameApi.Domain.Dao;
+using ByGameApi.Domain.Enums;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -146,6 +149,84 @@ namespace ByGameApi.Api.Controllers
                 {
                     Scores = sqlResult
                 });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "{errorTitle}", Constants.InternalErrorTitle);
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                {
+                    Title = Constants.InternalErrorTitle,
+                    Description = Constants.InternalErrorMessage,
+                    Status = StatusCodes.Status500InternalServerError
+                });
+            }
+        }
+
+        [ProducesResponseType(typeof(ScoreResponse), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.Unauthorized)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.NotFound)]
+        [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
+        [HttpPost(Name = nameof(UpsertScore))]
+        public async Task<IActionResult> UpsertScore([FromBody] ScoreCommand scoreCommand)
+        {
+            _logger.LogInformation("Request received: '{playerName}'", scoreCommand.PlayerName);
+
+            switch (scoreCommand.IsValid(true))
+            {
+                case StatusCodes.Status400BadRequest:
+                    _logger.LogInformation(Constants.BadRequestTitle);
+                    return StatusCode(StatusCodes.Status400BadRequest, new ErrorResponse
+                    {
+                        Title = Constants.BadRequestTitle,
+                        Description = Constants.BadRequestMessage,
+                        Status = StatusCodes.Status400BadRequest
+                    });
+
+                case StatusCodes.Status403Forbidden:
+                    _logger.LogInformation(Constants.ForbiddenTitle);
+                    return StatusCode(StatusCodes.Status403Forbidden, new ErrorResponse
+                    {
+                        Title = Constants.ForbiddenTitle,
+                        Description = "The required data contains forbidden elements.",
+                        Status = StatusCodes.Status403Forbidden
+                    });
+
+                case StatusCodes.Status200OK:
+                    break;
+
+                default:
+                    _logger.LogInformation(Constants.InternalErrorTitle);
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                    {
+                        Title = Constants.InternalErrorTitle,
+                        Description = Constants.InternalErrorMessage,
+                        Status = StatusCodes.Status500InternalServerError
+                    });
+            }
+
+            try
+            {
+                var sqlResult = await _scoreService.UpsertUnitaryScore(scoreCommand.PlayerName, scoreCommand.Value);
+
+                switch (sqlResult)
+                {
+                    case ScoreUpsertResult.Inserted:
+                        _logger.LogInformation(Constants.ScoresNotFoundTitle);
+                        return StatusCode(StatusCodes.Status201Created);
+
+                    case ScoreUpsertResult.Updated:
+                        _logger.LogInformation(Constants.ScoresNotFoundTitle);
+                        return StatusCode(StatusCodes.Status200OK);
+                    default:
+                        _logger.LogInformation(Constants.ScoresNotFoundTitle);
+                        return StatusCode(StatusCodes.Status400BadRequest, new ErrorResponse
+                        {
+                            Title = Constants.ScoresNotFoundTitle,
+                            Description = Constants.ScoreNotFoundMessage,
+                            Status = StatusCodes.Status404NotFound
+                        });
+                }
             }
             catch (Exception ex)
             {

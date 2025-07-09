@@ -6,19 +6,25 @@ namespace ByGameApi.Api.Commands;
 
 public class ScoreCommand
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [JsonProperty("playerName")]
     public string PlayerName { get; init; } = string.Empty;
 
     /// <summary>
     /// 
     /// </summary>
+    [JsonProperty("Value")]
+    public int Value { get; init; } = 0;
+
+    /// <summary>
+    /// 
+    /// </summary>
     /// <returns></returns>
-    public int IsValid()
+    public int IsValid(bool completeCheck = false)
     {
-        if(PlayerName == string.Empty)
-        {
-            return StatusCodes.Status400BadRequest;
-        }
+        if(PlayerName == string.Empty || Value <= 0 && completeCheck) { return StatusCodes.Status400BadRequest; }
 
         if (ContainsSqlKeywords(PlayerName) || ContainsSuspiciousSqlChars(PlayerName) || ContainsUnusualUnicode(PlayerName))
         {
