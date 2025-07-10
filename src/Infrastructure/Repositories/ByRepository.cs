@@ -73,7 +73,15 @@ public class ByRepository : IByRepository
             return false;
         }
 
-        var isRowAffected = await _commandExecutor.ExecuteChangesAsync($"INSERT INTO Scores (PlayerName, Value, Date) VALUES ({score.PlayerName}, {score.Value}, {score.Date});");
+        Dictionary<string, object> dbParameters = new() 
+        {
+            { "@name", score.PlayerName },
+            { "@value", score.Value },
+            { "@date", score.Date }
+        };
+
+        var isRowAffected = await _commandExecutor.ExecuteChangesAsync("INSERT INTO Scores (PlayerName, Value, CreatedAt) VALUES (@name, @value, @date);", dbParameters);
+
 
         if (!isRowAffected)
         {

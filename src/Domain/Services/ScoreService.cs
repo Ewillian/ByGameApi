@@ -61,7 +61,7 @@ public class ScoreService : IScoreService
             Date = DateTime.UtcNow
         };
 
-        bool operationSucceeded = existingScore == null
+        bool operationSucceeded = existingScore.PlayerName == string.Empty
             ? await _byRepository.InsertUnitaryScore(scoreToSave)
             : await _byRepository.UpdateUnitaryScore(scoreToSave);
 

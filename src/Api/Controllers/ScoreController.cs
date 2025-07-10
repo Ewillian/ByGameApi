@@ -218,6 +218,7 @@ namespace ByGameApi.Api.Controllers
                     case ScoreUpsertResult.Updated:
                         _logger.LogInformation(Constants.ScoresNotFoundTitle);
                         return StatusCode(StatusCodes.Status200OK);
+
                     default:
                         _logger.LogInformation(Constants.ScoresNotFoundTitle);
                         return StatusCode(StatusCodes.Status400BadRequest, new ErrorResponse

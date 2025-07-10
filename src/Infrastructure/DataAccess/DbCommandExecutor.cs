@@ -71,7 +71,7 @@ public class DbCommandExecutor : IDbCommandExecutor
     }
 
     /// <inheritdoc />
-    public async Task<bool> ExecuteChangesAsync(string query)
+    public async Task<bool> ExecuteChangesAsync(string query, Dictionary<string, object> parameters)
     {
         var connection = _connectionFactory.CreateConnection();
         var affectedRows = 0;
@@ -83,11 +83,19 @@ public class DbCommandExecutor : IDbCommandExecutor
             using var command = connection.CreateCommand();
             command.CommandText = query;
 
+            foreach (var param in parameters)
+            {
+                var dbParam = command.CreateParameter();
+                dbParam.ParameterName = param.Key;
+                dbParam.Value = param.Value ?? DBNull.Value;
+                command.Parameters.Add(dbParam);
+            }
+
             affectedRows = await command.ExecuteNonQueryAsync();
         }
         catch (System.Exception ex)
         {
-            _logger.LogError(ex, "[DB ERROR: ExecuteUpdaterAsync]");
+            _logger.LogError(ex, "[DB ERROR: ExecuteChangesAsync]");
             throw;
         }
         finally

@@ -19,5 +19,5 @@ public interface IDbCommandExecutor
     /// </summary>
     /// <param name="query">The SQL query to execute.</param>
     /// <returns>A task that represents the asynchronous operation. The task result is <c>true</c> if the operation completed successfully.</returns>
-    Task<bool> ExecuteChangesAsync(string query);
+    Task<bool> ExecuteChangesAsync(string query, Dictionary<string, object> parameters);
 }
