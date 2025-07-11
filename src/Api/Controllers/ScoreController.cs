@@ -43,38 +43,9 @@ namespace ByGameApi.Api.Controllers
 
             ScoreCommand scoreCommand = new() { PlayerName = playerName };
 
-            switch (scoreCommand.IsValid())
-            {
-                case StatusCodes.Status400BadRequest:
-                    _logger.LogInformation(Constants.BadRequestTitle);
-                    return StatusCode(StatusCodes.Status400BadRequest, new ErrorResponse
-                    {
-                        Title = Constants.BadRequestTitle,
-                        Description = Constants.BadRequestMessage,
-                        Status = StatusCodes.Status400BadRequest
-                    });
-
-                case StatusCodes.Status403Forbidden:
-                    _logger.LogInformation(Constants.ForbiddenTitle);
-                    return StatusCode(StatusCodes.Status403Forbidden, new ErrorResponse
-                    {
-                        Title = Constants.ForbiddenTitle,
-                        Description = "The required data contains forbidden elements.",
-                        Status = StatusCodes.Status403Forbidden
-                    });
-
-                case StatusCodes.Status200OK:
-                    break;
-
-                default:
-                    _logger.LogInformation(Constants.InternalErrorTitle);
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
-                    {
-                        Title = Constants.InternalErrorTitle,
-                        Description = Constants.InternalErrorMessage,
-                        Status = StatusCodes.Status500InternalServerError
-                    });
-            }
+            var validationResult = ValidateScoreCommand(scoreCommand);
+            if (validationResult != null)
+                return validationResult;
 
             ScoreDao sqlResult = null!;
 
@@ -172,38 +143,9 @@ namespace ByGameApi.Api.Controllers
         {
             _logger.LogInformation("Request received: '{playerName}'", scoreCommand.PlayerName);
 
-            switch (scoreCommand.IsValid(true))
-            {
-                case StatusCodes.Status400BadRequest:
-                    _logger.LogInformation(Constants.BadRequestTitle);
-                    return StatusCode(StatusCodes.Status400BadRequest, new ErrorResponse
-                    {
-                        Title = Constants.BadRequestTitle,
-                        Description = Constants.BadRequestMessage,
-                        Status = StatusCodes.Status400BadRequest
-                    });
-
-                case StatusCodes.Status403Forbidden:
-                    _logger.LogInformation(Constants.ForbiddenTitle);
-                    return StatusCode(StatusCodes.Status403Forbidden, new ErrorResponse
-                    {
-                        Title = Constants.ForbiddenTitle,
-                        Description = "The required data contains forbidden elements.",
-                        Status = StatusCodes.Status403Forbidden
-                    });
-
-                case StatusCodes.Status200OK:
-                    break;
-
-                default:
-                    _logger.LogInformation(Constants.InternalErrorTitle);
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
-                    {
-                        Title = Constants.InternalErrorTitle,
-                        Description = Constants.InternalErrorMessage,
-                        Status = StatusCodes.Status500InternalServerError
-                    });
-            }
+            var validationResult = ValidateScoreCommand(scoreCommand, isPost: true);
+            if (validationResult != null)
+                return validationResult;
 
             try
             {
@@ -240,5 +182,45 @@ namespace ByGameApi.Api.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="isPost"></param>
+        /// <returns></returns>
+        private IActionResult? ValidateScoreCommand(ScoreCommand command, bool isPost = false)
+        {
+            switch (command.IsValid(isPost))
+            {
+                case StatusCodes.Status400BadRequest:
+                    _logger.LogInformation(Constants.BadRequestTitle);
+                    return StatusCode(StatusCodes.Status400BadRequest, new ErrorResponse
+                    {
+                        Title = Constants.BadRequestTitle,
+                        Description = Constants.BadRequestMessage,
+                        Status = StatusCodes.Status400BadRequest
+                    });
+                case StatusCodes.Status403Forbidden:
+                    _logger.LogInformation(Constants.ForbiddenTitle);
+                    return StatusCode(StatusCodes.Status403Forbidden, new ErrorResponse
+                    {
+                        Title = Constants.ForbiddenTitle,
+                        Description = "The required data contains forbidden elements.",
+                        Status = StatusCodes.Status403Forbidden
+                    });
+                case StatusCodes.Status200OK:
+                    return null; // valid
+                default:
+                    _logger.LogInformation(Constants.InternalErrorTitle);
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
+                    {
+                        Title = Constants.InternalErrorTitle,
+                        Description = Constants.InternalErrorMessage,
+                        Status = StatusCodes.Status500InternalServerError
+                    });
+            }
+        }
+
     }
 }

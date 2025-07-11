@@ -53,6 +53,7 @@ public class ScoreService : IScoreService
         }
 
         var existingScore = await _byRepository.GetUnitaryScore(playerName);
+        bool isNewScore = string.IsNullOrEmpty(existingScore.PlayerName);
 
         var scoreToSave = new ScoreDao
         {
@@ -61,7 +62,7 @@ public class ScoreService : IScoreService
             Date = DateTime.UtcNow
         };
 
-        bool operationSucceeded = existingScore.PlayerName == string.Empty
+        bool operationSucceeded = isNewScore
             ? await _byRepository.InsertUnitaryScore(scoreToSave)
             : await _byRepository.UpdateUnitaryScore(scoreToSave);
 
@@ -70,7 +71,7 @@ public class ScoreService : IScoreService
             return ScoreUpsertResult.None;
         }
 
-        return existingScore == null
+        return isNewScore
             ? ScoreUpsertResult.Inserted
             : ScoreUpsertResult.Updated;
     }
