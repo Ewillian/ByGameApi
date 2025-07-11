@@ -172,7 +172,7 @@ public class ByRepositoryTests
     public async Task InsertUnitaryScore_When_ScoreIsInvalid_Should_ReturnFalseAndLogError()
     {
         // Arrange
-        var invalidScore = new ScoreDao(); // .IsNotValid() returns true
+        var invalidScore = new ScoreDao();
 
         // Act
         var result = await _byRepository.InsertUnitaryScore(invalidScore);
