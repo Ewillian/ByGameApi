@@ -3,6 +3,7 @@ using ByGameApi.Infrastructure.Abstractions;
 using ByGameApi.Infrastructure.Options;
 using ByGameApi.Infrastructure.Repositories;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using Moq;
@@ -13,12 +14,14 @@ namespace ByGameApi.Infrastructure.Tests.Unit.Repositories;
 
 public class ByRepositoryTests
 {
+    private readonly Mock<ILogger<ByRepository>> _loggerMock;
     private readonly Mock<IDbCommandExecutor> _commandExecutorMock;
     private readonly DatabaseOptions _databaseOptions;
     private readonly ByRepository _byRepository;
 
     public ByRepositoryTests()
     {
+        _loggerMock = new Mock<ILogger<ByRepository>>();
         _commandExecutorMock = new Mock<IDbCommandExecutor>();
         _databaseOptions = new DatabaseOptions
         {
@@ -34,22 +37,24 @@ public class ByRepositoryTests
             ConnectionTimeout = 5000
         };
 
-        _byRepository = new ByRepository(_databaseOptions, _commandExecutorMock.Object);
+        _byRepository = new ByRepository(_loggerMock.Object, _databaseOptions, _commandExecutorMock.Object);
     }
 
     [Theory]
+    [InlineData("logger")]
     [InlineData("options")]
     [InlineData("commandExecutor")]
     public void Constructor_When_ArgumentIsMissing_Should_ReturnArgumentNullException(string missingElement)
     {
         // Arrange
+        ILogger<ByRepository>? logger = missingElement == "logger" ? null : Mock.Of<ILogger<ByRepository>>();
         IOptions<DatabaseOptions>? databaseOptions = missingElement == "options" ? null : Mock.Of<IOptions<DatabaseOptions>>(opt => opt.Value == _databaseOptions);
         IDbCommandExecutor? commandExecutor = missingElement == "commandExecutor" ? null : Mock.Of<IDbCommandExecutor>();
 
         // Act
         var exception = Assert.Throws<ArgumentNullException>(() =>
         {
-            var byRepository = new ByRepository(databaseOptions!, commandExecutor!);
+            var byRepository = new ByRepository(logger!, databaseOptions!, commandExecutor!);
         });
 
         //Assert
@@ -135,5 +140,85 @@ public class ByRepositoryTests
 
         // Assert
         Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public async Task InsertUnitaryScore_When_ScoreIsValidAndInsertSucceeds_Should_ReturnTrue()
+    {
+        // Arrange
+        var score = new ScoreDao
+        {
+            PlayerName = "Player1",
+            Value = 100,
+            Date = DateTime.UtcNow
+        };
+
+        var commandExecutorMock = new Mock<IDbCommandExecutor>();
+        commandExecutorMock
+            .Setup(x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
+            .ReturnsAsync(true);
+
+        var repository = new ByRepository(_loggerMock.Object, _databaseOptions, commandExecutorMock.Object);
+
+        // Act
+        var result = await repository.InsertUnitaryScore(score);
+
+        // Assert
+        Assert.True(result);
+        commandExecutorMock.Verify(x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task InsertUnitaryScore_When_ScoreIsInvalid_Should_ReturnFalseAndLogError()
+    {
+        // Arrange
+        var invalidScore = new ScoreDao(); // .IsNotValid() returns true
+
+        // Act
+        var result = await _byRepository.InsertUnitaryScore(invalidScore);
+
+        // Assert
+        Assert.False(result);
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("IsNotValid")),
+            It.IsAny<System.Exception>(),
+            It.IsAny<Func<It.IsAnyType, System.Exception?, string>>()), Times.Once);
+
+        _commandExecutorMock.Verify(x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task InsertUnitaryScore_When_InsertFails_Should_ReturnFalseAndLogWarning()
+    {
+        // Arrange
+        var validScore = new ScoreDao
+        {
+            PlayerName = "Player2",
+            Value = 150,
+            Date = DateTime.UtcNow
+        };
+
+        var commandExecutorMock = new Mock<IDbCommandExecutor>();
+        var loggerMock = new Mock<ILogger<ByRepository>>();
+
+        commandExecutorMock
+            .Setup(x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
+            .ReturnsAsync(false);
+
+        var repository = new ByRepository(loggerMock.Object, _databaseOptions, commandExecutorMock.Object);
+
+        // Act
+        var result = await repository.InsertUnitaryScore(validScore);
+
+        // Assert
+        Assert.False(result);
+        loggerMock.Verify(x => x.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No rows affected")),
+            It.IsAny<System.Exception>(),
+            It.IsAny<Func<It.IsAnyType, System.Exception?, string>>()), Times.Once);
     }
 }
