@@ -293,7 +293,5 @@ public class ScoreControllerTests
         Assert.Equal(Constants.InternalErrorMessage, errorResponse.Description);
     }
 
-
-
     #endregion Public methods
 }

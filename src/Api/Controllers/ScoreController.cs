@@ -209,16 +209,8 @@ namespace ByGameApi.Api.Controllers
                         Description = "The required data contains forbidden elements.",
                         Status = StatusCodes.Status403Forbidden
                     });
-                case StatusCodes.Status200OK:
-                    return null; // valid
                 default:
-                    _logger.LogInformation(Constants.InternalErrorTitle);
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
-                    {
-                        Title = Constants.InternalErrorTitle,
-                        Description = Constants.InternalErrorMessage,
-                        Status = StatusCodes.Status500InternalServerError
-                    });
+                    return null;
             }
         }
 
