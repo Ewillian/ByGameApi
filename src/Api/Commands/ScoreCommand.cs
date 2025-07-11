@@ -9,13 +9,13 @@ public class ScoreCommand
     /// <summary>
     /// 
     /// </summary>
-    [JsonProperty("playerName")]
+    [JsonProperty(nameof(PlayerName))]
     public string PlayerName { get; init; } = string.Empty;
 
     /// <summary>
     /// 
     /// </summary>
-    [JsonProperty("Value")]
+    [JsonProperty(nameof(Value))]
     public int Value { get; init; } = 0;
 
     /// <summary>
@@ -43,15 +43,7 @@ public class ScoreCommand
     {
         string[] keywords = { "SELECT", "INSERT", "DELETE", "DROP", "UPDATE", "--", ";", "'" };
 
-        foreach (var keyword in keywords)
-        {
-            if (input.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return keywords.Any(keyword => input.Contains(keyword, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
