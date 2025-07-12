@@ -4,6 +4,7 @@ using ByGameApi.Api.Responses;
 using ByGameApi.Domain;
 using ByGameApi.Domain.Abstractions;
 using ByGameApi.Domain.Dao;
+using ByGameApi.Domain.Enums;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 
 using Xunit;
+
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ByGameApi.Api.Tests.Unit.Controllers;
 
@@ -23,6 +26,7 @@ public class ScoreControllerTests
     private readonly Mock<IScoreService> _scoreServiceMock;
     private readonly ScoreController _controller;
     private readonly DateTime _scoreDate = new(2024, 01, 01, 12, 00, 00);
+    private readonly ScoreCommand _scoreCommand = new() {PlayerName = "PlayerName",Value = 10};
     #endregion Fields
 
     #region Constructors
@@ -35,6 +39,11 @@ public class ScoreControllerTests
         _loggerMock = new Mock<ILogger<ScoreController>>();
         _scoreServiceMock = new Mock<IScoreService>();
         _controller = new ScoreController(_loggerMock.Object, _scoreServiceMock.Object);
+        var scoreCommand = new ScoreCommand
+        {
+            PlayerName = "PlayerName",
+            Value = 10
+        };
     }
 
     #endregion Constructors
@@ -203,6 +212,85 @@ public class ScoreControllerTests
         // Assert
         var objectResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpsertScore_When_ScoreCommandIsValidAndInsertSucceeds_Should_ReturnCreatedStatus()
+    {
+        // Arrange
+        _scoreServiceMock.Setup(s => s.UpsertUnitaryScore(It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(ScoreUpsertResult.Inserted);
+
+        // Act
+        var result = await _controller.UpsertScore(_scoreCommand);
+
+        // Assert
+        var objectResult = Assert.IsType<StatusCodeResult>(result);
+        Assert.Equal(StatusCodes.Status201Created, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpsertScore_When_CommandValidationChecksBadPlayerName_Should_ReturnBadRequest()
+    {
+        // Arrange
+        var scoreCommand = new ScoreCommand
+        {
+            PlayerName = "",
+            Value = 10
+        };
+
+        // Act
+        var result = await _controller.UpsertScore(scoreCommand);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, objectResult.StatusCode);
+
+        var error = Assert.IsType<ErrorResponse>(objectResult.Value);
+        Assert.Equal(Constants.BadRequestTitle, error.Title);
+        Assert.Equal(Constants.BadRequestMessage, error.Description);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task UpsertScore_When_CommandValidationChecksBadValue_Should_ReturnBadRequest(int value)
+    {
+        // Arrange
+        var scoreCommand = new ScoreCommand
+        {
+            PlayerName = "PlayerName",
+            Value = value
+        };
+
+        // Act
+        var result = await _controller.UpsertScore(scoreCommand);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status400BadRequest, objectResult.StatusCode);
+
+        var errorResponse = Assert.IsType<ErrorResponse>(objectResult.Value);
+        Assert.Equal(Constants.BadRequestTitle, errorResponse.Title);
+        Assert.Equal(Constants.BadRequestMessage, errorResponse.Description);
+    }
+
+    [Fact]
+    public async Task UpsertScore_When_ExceptionIsThrown_Should_ReturnInternalServerError()
+    {
+        // Arrange
+        _scoreServiceMock.Setup(s => s.UpsertUnitaryScore(_scoreCommand.PlayerName, _scoreCommand.Value))
+                         .ThrowsAsync(new Exception("Database failure"));
+
+        // Act
+        var result = await _controller.UpsertScore(_scoreCommand);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
+
+        var errorResponse = Assert.IsType<ErrorResponse>(objectResult.Value);
+        Assert.Equal(Constants.InternalErrorTitle, errorResponse.Title);
+        Assert.Equal(Constants.InternalErrorMessage, errorResponse.Description);
     }
 
     #endregion Public methods

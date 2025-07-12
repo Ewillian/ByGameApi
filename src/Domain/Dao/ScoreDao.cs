@@ -18,5 +18,19 @@ public class ScoreDao
 
     [JsonProperty("date")]
     public DateTime Date { get; init; }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    public bool IsNotValid()
+    {
+        if (string.IsNullOrWhiteSpace(PlayerName) || Value < 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
 }
 

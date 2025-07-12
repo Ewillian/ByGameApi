@@ -1,5 +1,6 @@
 ﻿using ByGameApi.Domain.Abstractions;
 using ByGameApi.Domain.Dao;
+using ByGameApi.Domain.Enums;
 using ByGameApi.Domain.Services;
 
 using Moq;
@@ -105,5 +106,79 @@ public class ScoreServiceTests
         Assert.NotNull(result);
         Assert.Equal(2, result.Count());
         Assert.Equal("Player1", result.First().PlayerName);
+    }
+
+
+    [Fact]
+    public async Task UpsertUnitaryScore_When_PlayerNameIsEmpty_Should_ReturnNone()
+    {
+        var result = await _scoreService.UpsertUnitaryScore("", 100);
+        Assert.Equal(ScoreUpsertResult.None, result);
+    }
+
+    [Fact]
+    public async Task UpsertUnitaryScore_When_ScoreValueIsLessThanOrEqualZero_Should_ReturnNone()
+    {
+        var result = await _scoreService.UpsertUnitaryScore("Player1", 0);
+        Assert.Equal(ScoreUpsertResult.None, result);
+    }
+
+    [Fact]
+    public async Task UpsertUnitaryScore_When_PlayerNotFoundAndInsertSucceeds_Should_ReturnInserted()
+    {
+        // Arrange
+        _byRepositoryMock.Setup(r => r.GetUnitaryScore("Player1"))
+            .ReturnsAsync(new ScoreDao());
+
+        _byRepositoryMock.Setup(r => r.InsertUnitaryScore(It.IsAny<ScoreDao>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _scoreService.UpsertUnitaryScore("Player1", 150);
+
+        // Assert
+        Assert.Equal(ScoreUpsertResult.Inserted, result);
+    }
+
+    [Fact]
+    public async Task UpsertUnitaryScore_When_PlayerNotFoundAndInsertFails_Should_ReturnNone()
+    {
+        _byRepositoryMock.Setup(r => r.GetUnitaryScore("Player1"))
+            .ReturnsAsync(new ScoreDao());
+
+        _byRepositoryMock.Setup(r => r.InsertUnitaryScore(It.IsAny<ScoreDao>()))
+            .ReturnsAsync(false);
+
+        var result = await _scoreService.UpsertUnitaryScore("Player1", 150);
+
+        Assert.Equal(ScoreUpsertResult.None, result);
+    }
+
+    [Fact]
+    public async Task UpsertUnitaryScore_When_PlayerFoundAndUpdateSucceeds_Should_ReturnUpdated()
+    {
+        _byRepositoryMock.Setup(r => r.GetUnitaryScore("Player1"))
+            .ReturnsAsync(new ScoreDao { PlayerName = "Player1" });
+
+        _byRepositoryMock.Setup(r => r.UpdateUnitaryScore(It.IsAny<ScoreDao>()))
+            .ReturnsAsync(true);
+
+        var result = await _scoreService.UpsertUnitaryScore("Player1", 150);
+
+        Assert.Equal(ScoreUpsertResult.Updated, result);
+    }
+
+    [Fact]
+    public async Task UpsertUnitaryScore_When_PlayerFoundAndUpdateFails_Should_ReturnNone()
+    {
+        _byRepositoryMock.Setup(r => r.GetUnitaryScore("Player1"))
+            .ReturnsAsync(new ScoreDao { PlayerName = "Player1" });
+
+        _byRepositoryMock.Setup(r => r.UpdateUnitaryScore(It.IsAny<ScoreDao>()))
+            .ReturnsAsync(false);
+
+        var result = await _scoreService.UpsertUnitaryScore("Player1", 150);
+
+        Assert.Equal(ScoreUpsertResult.None, result);
     }
 }
