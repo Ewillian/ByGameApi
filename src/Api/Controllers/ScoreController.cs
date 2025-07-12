@@ -39,7 +39,7 @@ namespace ByGameApi.Api.Controllers
         [HttpGet("unitary", Name = nameof(GetScore))]
         public async Task<IActionResult> GetScore([Required][FromQuery] string playerName)
         {
-            _logger.LogInformation("Request received: '{playerName}'", playerName);
+            _logger.LogInformation("Request received: '{PlayerName}'", playerName);
 
             ScoreCommand scoreCommand = new() { PlayerName = playerName };
 
@@ -55,7 +55,7 @@ namespace ByGameApi.Api.Controllers
             }
             catch (Exception ex) 
             {
-                _logger.LogError(ex, "{errorTitle}", Constants.InternalErrorTitle);
+                _logger.LogError(ex, "{ErrorTitle}", Constants.InternalErrorTitle);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                 {
                     Title = Constants.InternalErrorTitle,
@@ -123,7 +123,7 @@ namespace ByGameApi.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{errorTitle}", Constants.InternalErrorTitle);
+                _logger.LogError(ex, "{ErrorTitle}", Constants.InternalErrorTitle);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                 {
                     Title = Constants.InternalErrorTitle,
@@ -141,7 +141,7 @@ namespace ByGameApi.Api.Controllers
         [HttpPost(Name = nameof(UpsertScore))]
         public async Task<IActionResult> UpsertScore([FromBody] ScoreCommand scoreCommand)
         {
-            _logger.LogInformation("Request received: '{playerName}'", scoreCommand.PlayerName);
+            _logger.LogInformation("Request received: '{PlayerName}'", scoreCommand.PlayerName);
 
             var validationResult = ValidateScoreCommand(scoreCommand, isPost: true);
             if (validationResult != null)
@@ -173,7 +173,7 @@ namespace ByGameApi.Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{errorTitle}", Constants.InternalErrorTitle);
+                _logger.LogError(ex, "{ErrorTitle}", Constants.InternalErrorTitle);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse
                 {
                     Title = Constants.InternalErrorTitle,
