@@ -2,6 +2,7 @@
 
 using ByGameApi.Domain.Dao;
 using ByGameApi.Infrastructure.Abstractions;
+using ByGameApi.Infrastructure.Exception;
 
 using Microsoft.Extensions.Logging;
 
@@ -11,11 +12,6 @@ namespace ByGameApi.Infrastructure.DataAccess;
 public class DbCommandExecutor : IDbCommandExecutor
 {
     /// <summary>
-    /// The <see cref="ILogger"/> for <see cref="DbCommandExecutor"/>
-    /// </summary>
-    private readonly ILogger<DbCommandExecutor> _logger;
-
-    /// <summary>
     /// The sql connection factory
     /// </summary>
     private readonly IMySqlConnectionFactory _connectionFactory;
@@ -24,12 +20,10 @@ public class DbCommandExecutor : IDbCommandExecutor
     /// Initializes a new instance of the <see cref="DbCommandExecutor"/> class,
     /// used to execute database commands through a provided MySQL connection factory.
     /// </summary>
-    /// <param name="logger">The logger used to log database operations and errors.</param>
     /// <param name="connectionFactory">The factory responsible for creating MySQL database connections.</param>
     public DbCommandExecutor(ILogger<DbCommandExecutor> logger, IMySqlConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
-        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -59,8 +53,7 @@ public class DbCommandExecutor : IDbCommandExecutor
         }
         catch (System.Exception ex)
         {
-            _logger.LogError(ex, "[DB ERROR]: ExecuteReaderAsync");
-            throw;
+            throw new DatabaseException($"[DB ERROR]: ExecuteReaderAsync {ex.Message} {ex.StackTrace}");
         }
         finally
         {
@@ -95,8 +88,7 @@ public class DbCommandExecutor : IDbCommandExecutor
         }
         catch (System.Exception ex)
         {
-            _logger.LogError(ex, "[DB ERROR: ExecuteChangesAsync]");
-            throw;
+            throw new DatabaseException($"[DB ERROR]: ExecuteChangesAsync {ex.Message} {ex.StackTrace}");
         }
         finally
         {

@@ -189,7 +189,7 @@ namespace ByGameApi.Api.Controllers
         /// <param name="command"></param>
         /// <param name="isPost"></param>
         /// <returns></returns>
-        private IActionResult? ValidateScoreCommand(ScoreCommand command, bool isPost = false)
+        private ObjectResult? ValidateScoreCommand(ScoreCommand command, bool isPost = false)
         {
             switch (command.IsValid(isPost))
             {
