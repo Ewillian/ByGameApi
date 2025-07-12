@@ -80,7 +80,7 @@ jobs:
         run: |
           PROJECT_KEY="Ewillian_ByGameApi"
           ORGANIZATION="ewillian"
-          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}"
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
 
           # Get the last analysis task ID
           RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=new_issues,accepted_issues,new_security_hotspots,new_coverage,new_duplications&branch=$BRANCH")
