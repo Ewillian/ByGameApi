@@ -66,6 +66,42 @@ jobs:
       - name: End SonarCloud analysis
         run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
 
+  fetchSonarSummary:
+    name: Fetch SonarCloud Summary
+    runs-on: ubuntu-latest
+    needs: sonarcloud
+
+    outputs:
+      summary: ${{ steps.extract.outputs.summary }}
+
+    steps:
+      - name: Fetch SonarCloud Report
+        id: fetch
+        run: |
+          PROJECT_KEY="Ewillian_ByGameApi"
+          ORGANIZATION="ewillian"
+          BRANCH="Safe"
+
+          # Get the last analysis task ID
+          RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=new_issues,accepted_issues,new_security_hotspots,new_coverage,new_duplications&branch=$BRANCH")
+
+          echo "$RESPONSE" > response.json
+
+      - name: Extract Measures
+        id: extract
+        run: |
+          NEW_ISSUES=$(jq -r '.component.measures[] | select(.metric=="new_issues") | .value' response.json)
+          ACCEPTED_ISSUES=$(jq -r '.component.measures[] | select(.metric=="accepted_issues") | .value' response.json)
+          SECURITY_HOTSPOTS=$(jq -r '.component.measures[] | select(.metric=="new_security_hotspots") | .value' response.json)
+          NEW_COVERAGE=$(jq -r '.component.measures[] | select(.metric=="new_coverage") | .value' response.json)
+          NEW_DUPLICATION=$(jq -r '.component.measures[] | select(.metric=="new_duplications") | .value' response.json)
+
+          SUMMARY="Issues: ${NEW_ISSUES} New, ${ACCEPTED_ISSUES} Accepted\nMeasures:\n${SECURITY_HOTSPOTS} Security Hotspots\n${NEW_COVERAGE}% Coverage on New Code\n${NEW_DUPLICATION}% Duplication on New Code"
+
+          echo "$SUMMARY"
+          SUMMARY_ESCAPED=$(echo "$SUMMARY" | jq -Rsa .)
+          echo "summary=$SUMMARY_ESCAPED" >> $GITHUB_OUTPUT
+
   notifyDiscord:
     name: Notify Discord
     runs-on: ubuntu-latest
@@ -88,9 +124,10 @@ jobs:
                    "description": "'"$STATUS"'",
                    "color": 16711680,
                    "fields": [
-                     {"name": "Branch", "value": "${{ github.ref }}", "inline": true},
-                     {"name": "Committer", "value": "${{ github.actor }}", "inline": true},
-                     {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
+                     {"name": "Branch", "value": "${{ github.ref }}", "inline": false},
+                     {"name": "Committer", "value": "${{ github.actor }}", "inline": false},
+                     {"name": "Repository", "value": "${{ github.repository }}", "inline": false},
+                     {"name": "SonarCloud Summary", "value": '"$SUMMARY"', "inline": false}
                    ]
                  }]
                }' \
