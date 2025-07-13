@@ -83,20 +83,30 @@ jobs:
           PR_NUMBER=${{ github.event.pull_request.number }}
 
           # Get the last analysis task ID
-          RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=new_issues,accepted_issues,new_security_hotspots,new_coverage,new_duplicated_lines_density&pullRequest=$PR_NUMBER")
+          RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=issues,accepted_issues,new_security_hotspots,new_coverage,new_duplicated_lines_density&pullRequest=$PR_NUMBER")
 
           echo "$RESPONSE" > response.json
 
       - name: Extract Measures
         id: extract
         run: |
-          NEW_ISSUES=$(jq -r '.component.measures[] | select(.metric=="new_issues") | .value' response.json)
-          ACCEPTED_ISSUES=$(jq -r '.component.measures[] | select(.metric=="accepted_issues") | .value' response.json)
-          SECURITY_HOTSPOTS=$(jq -r '.component.measures[] | select(.metric=="new_security_hotspots") | .value' response.json)
-          NEW_COVERAGE=$(jq -r '.component.measures[] | select(.metric=="new_coverage") | .value' response.json)
-          NEW_DUPLICATION=$(jq -r '.component.measures[] | select(.metric=="new_duplicated_lines_density") | .value' response.json)
+          get_value() {
+            jq -r --arg METRIC "$1" '
+              if .component and .component.measures then
+                (.component.measures[]? | select(.metric==$METRIC) | .value) // "N/A"
+              else
+                "N/A"
+              end
+            ' response.json
+          }
 
-          SUMMARY="Issues: ${NEW_ISSUES} New, ${ACCEPTED_ISSUES} Accepted\nMeasures:\n${SECURITY_HOTSPOTS} Security Hotspots\n${NEW_COVERAGE}% Coverage on New Code\n${NEW_DUPLICATION}% Duplication on New Code"
+          ISSUES=$(get_value "issues")
+          ACCEPTED_ISSUES=$(get_value "accepted_issues")
+          SECURITY_HOTSPOTS=$(get_value "new_security_hotspots")
+          NEW_COVERAGE=$(get_value "new_coverage")
+          NEW_DUPLICATION=$(get_value "new_duplicated_lines_density")
+
+          SUMMARY="Issues: ${ISSUES} Total, ${ACCEPTED_ISSUES} Accepted\nMeasures:\n${SECURITY_HOTSPOTS} Security Hotspots\n${NEW_COVERAGE}% Coverage on New Code\n${NEW_DUPLICATION}% Duplication on New Code"
 
           echo "$SUMMARY"
           SUMMARY_ESCAPED=$(echo "$SUMMARY" | jq -Rsa .)
