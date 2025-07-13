@@ -66,32 +66,87 @@ jobs:
       - name: End SonarCloud analysis
         run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
 
+  fetchSonarSummary:
+    name: Fetch SonarCloud Summary
+    runs-on: ubuntu-latest
+    needs: sonarcloud
+
+    outputs:
+      summary: ${{ steps.extract.outputs.summary }}
+
+    steps:
+      - name: Fetch SonarCloud Report
+        id: fetch
+        run: |
+          PROJECT_KEY="Ewillian_ByGameApi"
+          ORGANIZATION="ewillian"
+          PR_NUMBER=${{ github.event.pull_request.number }}
+
+          # Get the last analysis task ID
+          RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=issues,accepted_issues,new_security_hotspots,new_coverage,new_duplicated_lines_density&pullRequest=$PR_NUMBER")
+
+          echo "$RESPONSE" > response.json
+
+      - name: Extract Measures
+        id: extract
+        run: |
+          get_value() {
+            jq -r --arg METRIC "$1" '
+              if .component and .component.measures then
+                (.component.measures[]? | select(.metric==$METRIC) | .value) // "N/A"
+              else
+                "N/A"
+              end
+            ' response.json
+          }
+
+          ISSUES=$(get_value "issues")
+          ACCEPTED_ISSUES=$(get_value "accepted_issues")
+          SECURITY_HOTSPOTS=$(get_value "new_security_hotspots")
+          NEW_COVERAGE=$(get_value "new_coverage")
+          NEW_DUPLICATION=$(get_value "new_duplicated_lines_density")
+
+          SUMMARY="Issues: ${ISSUES} Total, ${ACCEPTED_ISSUES} Accepted\nMeasures:\n${SECURITY_HOTSPOTS} Security Hotspots\n${NEW_COVERAGE}% Coverage on New Code\n${NEW_DUPLICATION}% Duplication on New Code"
+
+          echo "$SUMMARY"
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
   notifyDiscord:
     name: Notify Discord
     runs-on: ubuntu-latest
-    needs: sonarcloud
+    needs: [sonarcloud, fetchSonarSummary]
     if: always()
     steps:
       - name: Send Discord Notification
         run: |
           STATUS="✅ Build succeeded!"
+          COLOR=65280
           if [ "${{ needs.sonarcloud.result }}" != "success" ]; then
             STATUS="❌ Build failed!"
+            COLOR=16711680
           fi
 
+          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          SUMMARY="${{ needs.fetchSonarSummary.outputs.summary }}"
+
           curl -H "Content-Type: application/json" \
-               -X POST \
-               -d '{
-                 "username": "GitHub Actions",
-                 "embeds": [{
-                   "title": "🚀 Unity Build Status",
-                   "description": "'"$STATUS"'",
-                   "color": 16711680,
-                   "fields": [
-                     {"name": "Branch", "value": "${{ github.ref }}", "inline": true},
-                     {"name": "Committer", "value": "${{ github.actor }}", "inline": true},
-                     {"name": "Repository", "value": "${{ github.repository }}", "inline": true}
-                   ]
-                 }]
-               }' \
-               ${{ secrets.DISCORD_WEBHOOK_URL }}
+              -X POST \
+              -d '{
+                "username": "GitHub Actions",
+                "embeds": [{
+                  "title": "🚀 Unity Build Status",
+                  "description": "'"$STATUS"'",
+                  "color": '"$COLOR"',
+                  "fields": [
+                    {"name": "Branch", "value": "'"${BRANCH_NAME}"'", "inline": false},
+                    {"name": "Committer", "value": "'"${GITHUB_ACTOR}"'", "inline": false},
+                    {"name": "Repository", "value": "'"${GITHUB_REPOSITORY}"'", "inline": false},
+                    {"name": "SonarCloud Summary", "value": "```'"${SUMMARY//$'\n'/\\n}"'```", "inline": false},
+                    {"name": "Lien PR", "value": "https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}", "inline": false},
+                    {"name": "SonarCloud", "value": "https://sonarcloud.io/project/overview?id=Ewillian_ByGameApi", "inline": false}
+                  ]
+                }]
+              }' \
+              ${{ secrets.DISCORD_WEBHOOK_URL }}
