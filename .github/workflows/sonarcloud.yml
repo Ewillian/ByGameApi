@@ -109,13 +109,9 @@ jobs:
           SUMMARY="Issues: ${ISSUES} Total, ${ACCEPTED_ISSUES} Accepted\nMeasures:\n${SECURITY_HOTSPOTS} Security Hotspots\n${NEW_COVERAGE}% Coverage on New Code\n${NEW_DUPLICATION}% Duplication on New Code"
 
           echo "$SUMMARY"
-          SUMMARY_ESCAPED=$(echo "$SUMMARY" | jq -Rsa .)
-          echo "summary=$SUMMARY_ESCAPED" >> $GITHUB_OUTPUT
-          
-      - name: Debug Summary Decoded
-        run: |
-          echo "🔍 Decoded SUMMARY:"
-          echo '${{ needs.fetchSonarSummary.outputs.summary }}' | jq -r . 
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   notifyDiscord:
     name: Notify Discord
