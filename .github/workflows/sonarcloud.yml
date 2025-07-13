@@ -127,22 +127,20 @@ jobs:
 
           SUMMARY=${{ needs.fetchSonarSummary.outputs.summary }}
 
-          cat > payload.json <<EOF
-      {
-        "username": "GitHub Actions",
-        "embeds": [{
-          "title": "🚀 Unity Build Status",
-          "description": "$STATUS",
-          "color": 16711680,
-          "fields": [
-            { "name": "Branch", "value": "${{ github.ref }}", "inline": false },
-            { "name": "Committer", "value": "${{ github.actor }}", "inline": false },
-            { "name": "Repository", "value": "${{ github.repository }}", "inline": false },
-            { "name": "SonarCloud Summary", "value": $SUMMARY, "inline": false }
-          ]
-        }]
-      }
-      EOF
+          echo '{
+            "username": "GitHub Actions",
+            "embeds": [{
+              "title": "🚀 Unity Build Status",
+              "description": "'"$STATUS"'",
+              "color": 16711680,
+              "fields": [
+                { "name": "Branch", "value": "'"${GITHUB_REF}"'", "inline": false },
+                { "name": "Committer", "value": "'"${GITHUB_ACTOR}"'", "inline": false },
+                { "name": "Repository", "value": "'"${GITHUB_REPOSITORY}"'", "inline": false },
+                { "name": "SonarCloud Summary", "value": '"$SUMMARY"', "inline": false }
+              ]
+            }]
+          }' > payload.json
 
           curl -H "Content-Type: application/json" \
               -X POST \
