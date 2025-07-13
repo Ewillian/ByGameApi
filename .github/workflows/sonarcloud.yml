@@ -127,20 +127,24 @@ jobs:
 
           SUMMARY=${{ needs.fetchSonarSummary.outputs.summary }}
 
+          cat > payload.json <<EOF
+      {
+        "username": "GitHub Actions",
+        "embeds": [{
+          "title": "🚀 Unity Build Status",
+          "description": "$STATUS",
+          "color": 16711680,
+          "fields": [
+            { "name": "Branch", "value": "${{ github.ref }}", "inline": false },
+            { "name": "Committer", "value": "${{ github.actor }}", "inline": false },
+            { "name": "Repository", "value": "${{ github.repository }}", "inline": false },
+            { "name": "SonarCloud Summary", "value": $SUMMARY, "inline": false }
+          ]
+        }]
+      }
+      EOF
+
           curl -H "Content-Type: application/json" \
-               -X POST \
-               -d '{
-                 "username": "GitHub Actions",
-                 "embeds": [{
-                   "title": "🚀 Unity Build Status",
-                   "description": "'"$STATUS"'",
-                   "color": 16711680,
-                   "fields": [
-                     {"name": "Branch", "value": "${{ github.ref }}", "inline": false},
-                     {"name": "Committer", "value": "${{ github.actor }}", "inline": false},
-                     {"name": "Repository", "value": "${{ github.repository }}", "inline": false},
-                     {"name": "SonarCloud Summary", "value": '"$SUMMARY"', "inline": false}
-                   ]
-                 }]
-               }' \
-               ${{ secrets.DISCORD_WEBHOOK_URL }}
+              -X POST \
+              -d @payload.json \
+              ${{ secrets.DISCORD_WEBHOOK_URL }}
