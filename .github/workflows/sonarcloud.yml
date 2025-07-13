@@ -128,35 +128,25 @@ jobs:
             COLOR=16711680
           fi
 
-          SUMMARY=$(echo '${{ needs.fetchSonarSummary.outputs.summary }}' | jq -r .)
-
-          jq -n \
-            --arg username "GitHub Actions" \
-            --arg title "🚀 Unity Build Status" \
-            --arg description "$STATUS" \
-            --arg branch "${GITHUB_REF}" \
-            --arg actor "${GITHUB_ACTOR}" \
-            --arg repo "${GITHUB_REPOSITORY}" \
-            --arg summary "$SUMMARY" \
-            --argjson color "$COLOR" \
-            '{
-              username: $username,
-              embeds: [
-                {
-                  title: $title,
-                  description: $description,
-                  color: $color,
-                  fields: [
-                    { name: "Branch", value: $branch, inline: false },
-                    { name: "Committer", value: $actor, inline: false },
-                    { name: "Repository", value: $repo, inline: false },
-                    { name: "SonarCloud Summary", value: $summary, inline: false }
-                  ]
-                }
-              ]
-            }' > payload.json
+          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          SUMMARY="${{ needs.fetchSonarSummary.outputs.summary }}"
 
           curl -H "Content-Type: application/json" \
               -X POST \
-              -d @payload.json \
+              -d '{
+                "username": "GitHub Actions",
+                "embeds": [{
+                  "title": "🚀 Unity Build Status",
+                  "description": "'"$STATUS"'",
+                  "color": '"$COLOR"',
+                  "fields": [
+                    {"name": "Branch", "value": "'"${BRANCH_NAME}"'", "inline": false},
+                    {"name": "Committer", "value": "'"${GITHUB_ACTOR}"'", "inline": false},
+                    {"name": "Repository", "value": "'"${GITHUB_REPOSITORY}"'", "inline": false},
+                    {"name": "SonarCloud Summary", "value": "```'"${SUMMARY//$'\n'/\\n}"'```", "inline": false},
+                    {"name": "Lien PR", "value": "https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}", "inline": false},
+                    {"name": "SonarCloud", "value": "https://sonarcloud.io/project/overview?id=Ewillian_ByGameApi", "inline": false}
+                  ]
+                }]
+              }' \
               ${{ secrets.DISCORD_WEBHOOK_URL }}
