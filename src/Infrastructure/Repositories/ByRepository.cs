@@ -61,7 +61,27 @@ public class ByRepository : IByRepository
     /// <inheritdoc />
     public async Task<bool> UpdateUnitaryScore(ScoreDao score)
     {
-        return false;
+        if (score.IsNotValid())
+        {
+            _logger.LogError("[UpdateUnitaryScore: ScoreDao IsNotValid] ");
+            return false;
+        }
+
+        Dictionary<string, object> dbParameters = new()
+        {
+            { "@name", score.PlayerName },
+            { "@value", score.Value }
+        };
+
+        var isRowAffected = await _commandExecutor.ExecuteChangesAsync("UPDATE Scores SET Value = @value WHERE PlayerName = @name;", dbParameters);
+
+
+        if (!isRowAffected)
+        {
+            _logger.LogWarning("[UpdateUnitaryScore] No rows affected");
+        }
+
+        return isRowAffected;
     }
 
     /// <inheritdoc />

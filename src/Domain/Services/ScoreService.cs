@@ -47,13 +47,16 @@ public class ScoreService : IScoreService
     /// <inheritdoc />
     public async Task<ScoreUpsertResult> UpsertUnitaryScore(string playerName, int scoreValue)
     {
-        if (playerName.IsNullOrEmpty() || scoreValue <= 0)
-        {
+        if (string.IsNullOrEmpty(playerName) || scoreValue <= 0)
             return ScoreUpsertResult.None;
-        }
 
         var existingScore = await _byRepository.GetUnitaryScore(playerName);
-        bool isNewScore = string.IsNullOrEmpty(existingScore.PlayerName);
+        bool isNewPlayer = string.IsNullOrEmpty(existingScore.PlayerName);
+
+        // The case where the player already exists but the proposed score is less than or equal to the existing one.
+
+        if (!isNewPlayer && scoreValue <= existingScore.Value)
+            return ScoreUpsertResult.Unchanged;
 
         var scoreToSave = new ScoreDao
         {
@@ -62,16 +65,14 @@ public class ScoreService : IScoreService
             Date = DateTime.UtcNow
         };
 
-        bool operationSucceeded = isNewScore
+        bool success = isNewPlayer
             ? await _byRepository.InsertUnitaryScore(scoreToSave)
             : await _byRepository.UpdateUnitaryScore(scoreToSave);
 
-        if (!operationSucceeded)
-        {
+        if (!success)
             return ScoreUpsertResult.None;
-        }
 
-        return isNewScore
+        return isNewPlayer
             ? ScoreUpsertResult.Inserted
             : ScoreUpsertResult.Updated;
     }
