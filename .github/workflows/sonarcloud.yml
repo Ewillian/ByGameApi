@@ -111,6 +111,11 @@ jobs:
           echo "$SUMMARY"
           SUMMARY_ESCAPED=$(echo "$SUMMARY" | jq -Rsa .)
           echo "summary=$SUMMARY_ESCAPED" >> $GITHUB_OUTPUT
+          
+      - name: Debug Summary Decoded
+        run: |
+          echo "🔍 Decoded SUMMARY:"
+          echo '${{ needs.fetchSonarSummary.outputs.summary }}' | jq -r . 
 
   notifyDiscord:
     name: Notify Discord
@@ -121,26 +126,39 @@ jobs:
       - name: Send Discord Notification
         run: |
           STATUS="✅ Build succeeded!"
+          COLOR=65280
           if [ "${{ needs.sonarcloud.result }}" != "success" ]; then
             STATUS="❌ Build failed!"
+            COLOR=16711680
           fi
 
-          SUMMARY=${{ needs.fetchSonarSummary.outputs.summary }}
+          SUMMARY=$(echo '${{ needs.fetchSonarSummary.outputs.summary }}' | jq -r .)
 
-          echo '{
-            "username": "GitHub Actions",
-            "embeds": [{
-              "title": "🚀 Unity Build Status",
-              "description": "'"$STATUS"'",
-              "color": 16711680,
-              "fields": [
-                { "name": "Branch", "value": "'"${GITHUB_REF}"'", "inline": false },
-                { "name": "Committer", "value": "'"${GITHUB_ACTOR}"'", "inline": false },
-                { "name": "Repository", "value": "'"${GITHUB_REPOSITORY}"'", "inline": false },
-                { "name": "SonarCloud Summary", "value": '"$SUMMARY"', "inline": false }
+          jq -n \
+            --arg username "GitHub Actions" \
+            --arg title "🚀 Unity Build Status" \
+            --arg description "$STATUS" \
+            --arg branch "${GITHUB_REF}" \
+            --arg actor "${GITHUB_ACTOR}" \
+            --arg repo "${GITHUB_REPOSITORY}" \
+            --arg summary "$SUMMARY" \
+            --argjson color "$COLOR" \
+            '{
+              username: $username,
+              embeds: [
+                {
+                  title: $title,
+                  description: $description,
+                  color: $color,
+                  fields: [
+                    { name: "Branch", value: $branch, inline: false },
+                    { name: "Committer", value: $actor, inline: false },
+                    { name: "Repository", value: $repo, inline: false },
+                    { name: "SonarCloud Summary", value: $summary, inline: false }
+                  ]
+                }
               ]
-            }]
-          }' > payload.json
+            }' > payload.json
 
           curl -H "Content-Type: application/json" \
               -X POST \
