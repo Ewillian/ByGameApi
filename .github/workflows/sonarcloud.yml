@@ -64,7 +64,11 @@ jobs:
             /p:CoverletOutput=./TestResults/Infra.coverage.opencover.xml
 
       - name: End SonarCloud analysis
-        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+        run: |
+          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}" || {
+            echo "❌ SonarCloud analysis failed"
+            exit 1
+          }
 
   fetchSonarSummary:
     name: Fetch SonarCloud Summary
@@ -105,11 +109,6 @@ jobs:
               end
             ' response.json
           }
-
-          echo "🔍 SonarCloud Measures:"
-          echo "Security Hotspots: $(get_value 'security_hotspots')"
-          echo "New Coverage: $(get_value 'new_coverage')"
-          echo "New Duplication: $(get_value 'new_duplicated_lines_density')"
 
           ACCEPTED_ISSUES=$(get_value "accepted_issues")
           SECURITY_HOTSPOTS=$(get_value "new_security_hotspots")
