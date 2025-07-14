@@ -54,7 +54,6 @@ public class ScoreService : IScoreService
         bool isNewPlayer = string.IsNullOrEmpty(existingScore.PlayerName);
 
         // The case where the player already exists but the proposed score is less than or equal to the existing one.
-
         if (!isNewPlayer && scoreValue <= existingScore.Value)
             return ScoreUpsertResult.Unchanged;
 

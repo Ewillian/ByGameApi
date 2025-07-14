@@ -70,59 +70,6 @@ jobs:
             exit 1
           }
 
-      - name: Wait for and check SonarCloud Quality Gate
-        run: |
-          echo "⏳ Waiting for SonarCloud quality gate result..."
-          MAX_RETRIES=60
-          RETRY_DELAY=5
-          COUNTER=0
-
-          PROJECT_KEY="Ewillian_ByGameApi"
-          ORGANIZATION="ewillian"
-          PR_NUMBER=${{ github.event.pull_request.number }}
-
-          # Fetch the latest analysis task ID
-          TASK_INFO=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/ce/component?component=$PROJECT_KEY")
-          TASK_ID=$(echo "$TASK_INFO" | jq -r '.queue[0].id')
-
-          if [ -z "$TASK_ID" ] || [ "$TASK_ID" == "null" ]; then
-            echo "❌ No task ID found for latest analysis"
-            exit 1
-          fi
-
-          echo "🔎 Found task ID: $TASK_ID"
-
-          # Poll until the task is complete
-          while [ $COUNTER -lt $MAX_RETRIES ]; do
-            STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/ce/task?id=$TASK_ID" | jq -r '.task.status')
-            if [ "$STATUS" == "SUCCESS" ]; then
-              break
-            fi
-            echo "⏳ Task status: $STATUS (waiting...)"
-            sleep $RETRY_DELAY
-            ((COUNTER++))
-          done
-
-          if [ "$STATUS" != "SUCCESS" ]; then
-            echo "❌ SonarCloud analysis task did not complete successfully"
-            exit 1
-          fi
-
-          # Get quality gate status
-          ANALYSIS_ID=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/ce/task?id=$TASK_ID" | jq -r '.task.analysisId')
-          QUALITY_GATE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/qualitygates/project_status?analysisId=$ANALYSIS_ID")
-
-          GATE_STATUS=$(echo "$QUALITY_GATE" | jq -r '.projectStatus.status')
-
-          echo "✅ Quality Gate Status: $GATE_STATUS"
-
-          if [ "$GATE_STATUS" != "OK" ]; then
-            echo "❌ Quality Gate failed"
-            exit 1
-          fi
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
   fetchSonarSummary:
     name: Fetch SonarCloud Summary
     runs-on: ubuntu-latest

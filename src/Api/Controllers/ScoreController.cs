@@ -1,8 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 
-using Azure;
-
 using ByGameApi.Api.Commands;
 using ByGameApi.Api.Responses;
 using ByGameApi.Domain;
