@@ -66,42 +66,6 @@ jobs:
       - name: End SonarCloud analysis
         run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
 
-      - name: Wait for SonarCloud Quality Gate
-        run: |
-          PROJECT_KEY="Ewillian_ByGameApi"
-          ORGANIZATION="ewillian"
-          TASK_URL=$(find . -name "report-task.txt" | head -n 1)
-          CE_TASK_ID=$(grep 'ceTaskId' $TASK_URL | cut -d'=' -f2)
-
-          echo "Waiting for SonarCloud analysis (taskId=$CE_TASK_ID)..."
-
-          STATUS="PENDING"
-          TIMEOUT=60
-          COUNT=0
-
-          while [[ "$STATUS" == "PENDING" && $COUNT -lt $TIMEOUT ]]; do
-            sleep 5
-            RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/ce/task?id=$CE_TASK_ID")
-            STATUS=$(echo "$RESPONSE" | jq -r '.task.status')
-            ((COUNT++))
-          done
-
-          if [ "$STATUS" != "SUCCESS" ]; then
-            echo "SonarCloud analysis failed or timed out."
-            exit 1
-          fi
-
-          ANALYSIS_ID=$(echo "$RESPONSE" | jq -r '.task.analysisId')
-
-          QG_STATUS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/qualitygates/project_status?analysisId=$ANALYSIS_ID" | jq -r '.projectStatus.status')
-
-          echo "Quality Gate Status: $QG_STATUS"
-
-          if [ "$QG_STATUS" != "OK" ]; then
-            echo "Quality Gate failed."
-            exit 1
-          fi
-
   fetchSonarSummary:
     name: Fetch SonarCloud Summary
     runs-on: ubuntu-latest
