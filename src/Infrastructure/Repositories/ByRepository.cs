@@ -63,7 +63,7 @@ public class ByRepository : IByRepository
     {
         if (score.IsNotValid())
         {
-            _logger.LogError("[UpdateUnitaryScore: ScoreDao IsNotValid] ");
+            _logger.LogError("[UpdateUnitaryScore: ScoreDao IsNotValid]");
             return false;
         }
 
