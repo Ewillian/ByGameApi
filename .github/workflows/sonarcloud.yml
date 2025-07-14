@@ -142,6 +142,11 @@ jobs:
             ' response.json
           }
 
+          echo "🔍 SonarCloud Measures:"
+          echo "Security Hotspots: $(get_value 'security_hotspots')"
+          echo "New Coverage: $(get_value 'new_coverage')"
+          echo "New Duplication: $(get_value 'new_duplicated_lines_density')"
+
           ACCEPTED_ISSUES=$(get_value "accepted_issues")
           SECURITY_HOTSPOTS=$(get_value "new_security_hotspots")
           NEW_COVERAGE=$(get_value "new_coverage")
