@@ -9,29 +9,34 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace ByGameApi.Infrastructure.Repositories;
 
+/// <summary>
+/// Repository responsible for interacting with the Scores database.
+/// Implements logic related to inserting, updating, and retrieving scores.
+/// </summary>
 public class ByRepository : IByRepository
 {
     /// <summary>
-    /// The <see cref="ILogger"/> for <see cref="ByRepository"/>
+    /// Logger instance used for diagnostics and error logging.
     /// </summary>
     private readonly ILogger<ByRepository> _logger;
 
     /// <summary>
-    /// The database options
+    /// Configuration options for database access.
     /// </summary>
     private readonly DatabaseOptions _options;
 
     /// <summary>
-    /// The sql command executor
+    /// Abstraction for executing SQL commands and queries.
     /// </summary>
     private readonly IDbCommandExecutor _commandExecutor;
 
     /// <summary>
-    /// 
+    /// Initializes a new instance of the <see cref="ByRepository"/> class.
     /// </summary>
-    /// <param name="options"></param>
-    /// <param name="commandExecutor"></param>
-    /// <exception cref="ArgumentNullException"></exception>
+    /// <param name="logger">Logger used for diagnostic purposes.</param>
+    /// <param name="options">Injected configuration options for database queries.</param>
+    /// <param name="commandExecutor">Component responsible for executing database commands.</param>
+    /// <exception cref="ArgumentNullException">Thrown if any of the dependencies are null.</exception>
     public ByRepository(ILogger<ByRepository> logger, IOptions<DatabaseOptions> options, IDbCommandExecutor commandExecutor)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -45,7 +50,7 @@ public class ByRepository : IByRepository
         if (string.IsNullOrWhiteSpace(playerName))
             return new ScoreDao();
 
-        var result = await _commandExecutor.ExecuteReaderAsync($"{_options.SqlQueryGet} WHERE PlayerName = '{playerName}' LIMIT 1;");
+        var result = await _commandExecutor.ExecuteReaderAsync($"SELECT ScoreId, PlayerName, Value FROM {_options.Table} WHERE PlayerName = '{playerName}' LIMIT 1;");
 
         return result.IsNullOrEmpty() ? new ScoreDao() : result.FirstOrDefault()!;
     }
@@ -55,13 +60,33 @@ public class ByRepository : IByRepository
     {
         if(scoreCount < 0) {  return []; }
 
-        return await _commandExecutor.ExecuteReaderAsync($"SELECT * FROM Scores ORDER BY Value DESC LIMIT {scoreCount};");
+        return await _commandExecutor.ExecuteReaderAsync($"SELECT * FROM {_options.Table} ORDER BY Value DESC LIMIT {scoreCount};");
     }
 
     /// <inheritdoc />
     public async Task<bool> UpdateUnitaryScore(ScoreDao score)
     {
-        return false;
+        if (score.IsNotValid())
+        {
+            _logger.LogError("[UpdateUnitaryScore: ScoreDao IsNotValid]");
+            return false;
+        }
+
+        Dictionary<string, object> dbParameters = new()
+        {
+            { "@name", score.PlayerName },
+            { "@value", score.Value }
+        };
+
+        var isRowAffected = await _commandExecutor.ExecuteChangesAsync($"UPDATE {_options.Table} SET Value = @value WHERE PlayerName = @name;", dbParameters);
+
+
+        if (!isRowAffected)
+        {
+            _logger.LogWarning("[UpdateUnitaryScore] No rows affected");
+        }
+
+        return isRowAffected;
     }
 
     /// <inheritdoc />
@@ -80,7 +105,7 @@ public class ByRepository : IByRepository
             { "@date", score.Date }
         };
 
-        var isRowAffected = await _commandExecutor.ExecuteChangesAsync("INSERT INTO Scores (PlayerName, Value, CreatedAt) VALUES (@name, @value, @date);", dbParameters);
+        var isRowAffected = await _commandExecutor.ExecuteChangesAsync($"INSERT INTO {_options.Table} (PlayerName, Value, CreatedAt) VALUES (@name, @value, @date);", dbParameters);
 
 
         if (!isRowAffected)

@@ -18,5 +18,10 @@ public enum ScoreUpsertResult
     /// <summary>
     /// An existing score was successfully updated in the database.
     /// </summary>
-    Updated
+    Updated,
+
+    /// <summary>
+    /// The score was not updated due to low new score
+    /// </summary>
+    Unchanged
 }

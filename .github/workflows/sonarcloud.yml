@@ -64,12 +64,16 @@ jobs:
             /p:CoverletOutput=./TestResults/Infra.coverage.opencover.xml
 
       - name: End SonarCloud analysis
-        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+        run: |
+          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}" || {
+            echo "❌ SonarCloud analysis failed"
+            exit 1
+          }
 
   fetchSonarSummary:
     name: Fetch SonarCloud Summary
     runs-on: ubuntu-latest
-    needs: sonarcloud
+    needs: [sonarcloud]
 
     outputs:
       summary: ${{ steps.extract.outputs.summary }}
@@ -83,7 +87,7 @@ jobs:
           PR_NUMBER=${{ github.event.pull_request.number }}
 
           # Get the last analysis task ID
-          RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=issues,accepted_issues,new_security_hotspots,new_coverage,new_duplicated_lines_density&pullRequest=$PR_NUMBER")
+          RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=accepted_issues,new_security_hotspots,new_coverage,new_duplicated_lines_density&pullRequest=$PR_NUMBER")
 
           echo "$RESPONSE" > response.json
 
@@ -93,20 +97,25 @@ jobs:
           get_value() {
             jq -r --arg METRIC "$1" '
               if .component and .component.measures then
-                (.component.measures[]? | select(.metric==$METRIC) | .value) // "N/A"
+                (.component.measures[]? | select(.metric==$METRIC) |
+                  if has("periods") and (.periods | length > 0) then
+                    .periods[0].value
+                  else
+                    .value
+                  end
+                ) // "N/A"
               else
                 "N/A"
               end
             ' response.json
           }
 
-          ISSUES=$(get_value "issues")
           ACCEPTED_ISSUES=$(get_value "accepted_issues")
           SECURITY_HOTSPOTS=$(get_value "new_security_hotspots")
           NEW_COVERAGE=$(get_value "new_coverage")
           NEW_DUPLICATION=$(get_value "new_duplicated_lines_density")
 
-          SUMMARY="Issues: ${ISSUES} Total, ${ACCEPTED_ISSUES} Accepted\nMeasures:\n${SECURITY_HOTSPOTS} Security Hotspots\n${NEW_COVERAGE}% Coverage on New Code\n${NEW_DUPLICATION}% Duplication on New Code"
+          SUMMARY="Total issues, ${ACCEPTED_ISSUES} Accepted\nMeasures:\n${SECURITY_HOTSPOTS} Security Hotspots\n${NEW_COVERAGE}% Coverage on New Code\n${NEW_DUPLICATION}% Duplication on New Code"
 
           echo "$SUMMARY"
           echo "summary<<EOF" >> $GITHUB_OUTPUT

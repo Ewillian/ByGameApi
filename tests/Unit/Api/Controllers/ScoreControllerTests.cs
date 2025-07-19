@@ -14,8 +14,6 @@ using Moq;
 
 using Xunit;
 
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 namespace ByGameApi.Api.Tests.Unit.Controllers;
 
 public class ScoreControllerTests
@@ -214,18 +212,38 @@ public class ScoreControllerTests
         Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
     }
 
-    [Fact]
-    public async Task UpsertScore_When_ScoreCommandIsValidAndInsertSucceeds_Should_ReturnCreatedStatus()
+    [Theory]
+    [InlineData(ScoreUpsertResult.Inserted, StatusCodes.Status201Created)]
+    [InlineData(ScoreUpsertResult.Updated, StatusCodes.Status200OK)]
+    [InlineData(ScoreUpsertResult.Unchanged, StatusCodes.Status304NotModified)]
+    public async Task UpsertScore_When_ScoreServiceReturns_Should_SendCorrectStatus(ScoreUpsertResult scoreServiceResult, int expectedStatusCode)
     {
         // Arrange
-        _scoreServiceMock.Setup(s => s.UpsertUnitaryScore(It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(ScoreUpsertResult.Inserted);
+        _scoreServiceMock.Setup(s => s.UpsertUnitaryScore(It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(scoreServiceResult);
 
         // Act
         var result = await _controller.UpsertScore(_scoreCommand);
 
         // Assert
         var objectResult = Assert.IsType<StatusCodeResult>(result);
-        Assert.Equal(StatusCodes.Status201Created, objectResult.StatusCode);
+        Assert.Equal(expectedStatusCode, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpsertScore_When_ScoreIsNotFound_Should_ReturnNotFound()
+    {
+        // Arrange
+        _scoreServiceMock.Setup(s => s.UpsertUnitaryScore(It.IsAny<string>(), It.IsAny<int>())).ReturnsAsync(ScoreUpsertResult.None);
+
+        // Act
+        var result = await _controller.UpsertScore(_scoreCommand);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        var error = Assert.IsType<ErrorResponse>(objectResult.Value);
+        Assert.Equal(Constants.ScoreNotFoundTitle, error.Title);
+        Assert.Equal(Constants.ScoreNotFoundMessage, error.Description);
+        Assert.Equal(StatusCodes.Status404NotFound, error.Status);
     }
 
     [Fact]

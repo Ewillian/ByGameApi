@@ -181,4 +181,15 @@ public class ScoreServiceTests
 
         Assert.Equal(ScoreUpsertResult.None, result);
     }
+
+    [Fact]
+    public async Task UpsertUnitaryScore_When_PlayerFoundAndScoreIsNotChanged_Should_ReturnUnchanged()
+    {
+        _byRepositoryMock.Setup(r => r.GetUnitaryScore("Player1"))
+            .ReturnsAsync(new ScoreDao { PlayerName = "Player1", Value = 10 });
+
+        var result = await _scoreService.UpsertUnitaryScore("Player1", 10);
+
+        Assert.Equal(ScoreUpsertResult.Unchanged, result);
+    }
 }

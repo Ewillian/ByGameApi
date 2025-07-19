@@ -1,8 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 
-using Azure;
-
 using ByGameApi.Api.Commands;
 using ByGameApi.Api.Responses;
 using ByGameApi.Domain;
@@ -154,18 +152,19 @@ namespace ByGameApi.Api.Controllers
                 switch (sqlResult)
                 {
                     case ScoreUpsertResult.Inserted:
-                        _logger.LogInformation(Constants.ScoresNotFoundTitle);
                         return StatusCode(StatusCodes.Status201Created);
 
                     case ScoreUpsertResult.Updated:
-                        _logger.LogInformation(Constants.ScoresNotFoundTitle);
                         return StatusCode(StatusCodes.Status200OK);
 
+                    case ScoreUpsertResult.Unchanged:
+                        return StatusCode(StatusCodes.Status304NotModified);
+
                     default:
-                        _logger.LogInformation(Constants.ScoresNotFoundTitle);
-                        return StatusCode(StatusCodes.Status400BadRequest, new ErrorResponse
+                        _logger.LogInformation(Constants.ScoreNotFoundTitle);
+                        return StatusCode(StatusCodes.Status404NotFound, new ErrorResponse
                         {
-                            Title = Constants.ScoresNotFoundTitle,
+                            Title = Constants.ScoreNotFoundTitle,
                             Description = Constants.ScoreNotFoundMessage,
                             Status = StatusCodes.Status404NotFound
                         });

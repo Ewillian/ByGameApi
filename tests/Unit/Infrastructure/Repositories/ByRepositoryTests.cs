@@ -31,9 +31,6 @@ public class ByRepositoryTests
             User = "root",
             Password = "password",
             Table = "Scores",
-            SqlQueryGet = "SELECT * FROM Scores",
-            MinConnectionPoolSize = 10,
-            MaxConnectionPoolSize = 100,
             ConnectionTimeout = 5000
         };
 
@@ -153,19 +150,16 @@ public class ByRepositoryTests
             Date = DateTime.UtcNow
         };
 
-        var commandExecutorMock = new Mock<IDbCommandExecutor>();
-        commandExecutorMock
+        _commandExecutorMock
             .Setup(x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
             .ReturnsAsync(true);
 
-        var repository = new ByRepository(_loggerMock.Object, _databaseOptions, commandExecutorMock.Object);
-
         // Act
-        var result = await repository.InsertUnitaryScore(score);
+        var result = await _byRepository.InsertUnitaryScore(score);
 
         // Assert
         Assert.True(result);
-        commandExecutorMock.Verify(x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()), Times.Once);
+        _commandExecutorMock.Verify(x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()), Times.Once);
     }
 
     [Fact]
@@ -200,25 +194,94 @@ public class ByRepositoryTests
             Date = DateTime.UtcNow
         };
 
-        var commandExecutorMock = new Mock<IDbCommandExecutor>();
-        var loggerMock = new Mock<ILogger<ByRepository>>();
-
-        commandExecutorMock
+        _commandExecutorMock
             .Setup(x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
             .ReturnsAsync(false);
 
-        var repository = new ByRepository(loggerMock.Object, _databaseOptions, commandExecutorMock.Object);
+        var repository = new ByRepository(_loggerMock.Object, _databaseOptions, _commandExecutorMock.Object);
 
         // Act
         var result = await repository.InsertUnitaryScore(validScore);
 
         // Assert
         Assert.False(result);
-        loggerMock.Verify(x => x.Log(
+        _loggerMock.Verify(x => x.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No rows affected")),
             It.IsAny<System.Exception>(),
             It.IsAny<Func<It.IsAnyType, System.Exception?, string>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateUnitaryScore_When_ScoreIsInvalid_Should_ReturnFalseAndLogError()
+    {
+        // Arrange
+        var invalidScore = new Mock<ScoreDao>();
+
+        // Act
+        var result = await _byRepository.UpdateUnitaryScore(invalidScore.Object);
+
+        // Assert
+        Assert.False(result);
+
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("[UpdateUnitaryScore: ScoreDao IsNotValid]")),
+            It.IsAny<System.Exception>(),
+            It.IsAny<Func<It.IsAnyType, System.Exception?, string>>()), Times.Once);
+
+        _commandExecutorMock.Verify(
+            x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()),
+            Times.Never
+        );
+    }
+
+    [Fact]
+    public async Task UpdateUnitaryScore_When_NoRowsAreAffected_Should_ReturnFalseAndLogWarning()
+    {
+        // Arrange
+        var validScore = new ScoreDao { PlayerName = "Alice", Value = 100 };
+
+        _commandExecutorMock
+            .Setup(x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _byRepository.UpdateUnitaryScore(validScore);
+
+        // Assert
+        Assert.False(result);
+
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No rows affected")),
+            It.IsAny<System.Exception>(),
+            It.IsAny<Func<It.IsAnyType, System.Exception?, string>>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateUnitaryScore_When_RowIsAffected_Should_ReturnTrue()
+    {
+        // Arrange
+        var validScore = new ScoreDao { PlayerName = "Bob", Value = 300 };
+
+        _commandExecutorMock
+            .Setup(x => x.ExecuteChangesAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _byRepository.UpdateUnitaryScore(validScore);
+
+        // Assert
+        Assert.True(result);
+        _loggerMock.Verify(x => x.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No rows affected")),
+            It.IsAny<System.Exception>(),
+            It.IsAny<Func<It.IsAnyType, System.Exception?, string>>()), Times.Never);
     }
 }
