@@ -1,6 +1,4 @@
-﻿using System.Reflection.Metadata.Ecma335;
-
-using ByGameApi.Domain.Abstractions;
+﻿using ByGameApi.Domain.Abstractions;
 using ByGameApi.Domain.Dao;
 using ByGameApi.Domain.Enums;
 
@@ -9,20 +7,20 @@ using Microsoft.IdentityModel.Tokens;
 namespace ByGameApi.Domain.Services;
 
 /// <summary>
-/// 
+/// Service responsible for managing score-related operations.
 /// </summary>
 public class ScoreService : IScoreService
 {
     /// <summary>
-    /// 
+    /// The repository interface used to interact with the database.
     /// </summary>
     private readonly IByRepository _byRepository;
 
     /// <summary>
-    /// 
+    /// Constructs a new instance of <see cref="ScoreService"/>.
     /// </summary>
-    /// <param name="byRepository"></param>
-    /// <exception cref="ArgumentNullException"></exception>
+    /// <param name="byRepository">The repository implementation.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="byRepository"/> is null.</exception>
     public ScoreService(IByRepository byRepository)
     {
         _byRepository = byRepository ?? throw new ArgumentNullException(nameof(byRepository));
