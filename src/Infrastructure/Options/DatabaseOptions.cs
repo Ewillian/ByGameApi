@@ -48,14 +48,19 @@ public sealed class DatabaseOptions : IOptions<DatabaseOptions>
     public int MaxConnectionPoolSize { get; init; } = 1000;
 
     /// <summary>
-    /// The maxTime MS of queries
+    /// Is pooling active
+    /// </summary>
+    public bool IsPooling { get; init; } = true;
+
+    /// <summary>
+    /// The maxTime MS of connection duration
     /// </summary>
     public int ConnectionTimeout { get; init; } = 10000;
 
     /// <summary>
-    /// The sql get score query
+    /// The maxTime MS of queries
     /// </summary>
-    public string SqlQueryGet { get; init; } = "";
+    public int CommandTimeout { get; init; } = 10000;
 
     /// <summary>
     /// Value

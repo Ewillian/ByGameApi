@@ -38,9 +38,6 @@ public class MySqlConnectionFactoryTests
             User = "root",
             Password = "password",
             Table = "Scores",
-            SqlQueryGet = "SELECT * FROM Scores",
-            MinConnectionPoolSize = 10,
-            MaxConnectionPoolSize = 100,
             ConnectionTimeout = 5000
         };
 

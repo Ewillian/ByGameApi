@@ -3,8 +3,9 @@
 using ByGameApi.Domain.Dao;
 using ByGameApi.Infrastructure.Abstractions;
 using ByGameApi.Infrastructure.Exception;
+using ByGameApi.Infrastructure.Options;
 
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ByGameApi.Infrastructure.DataAccess;
 
@@ -21,7 +22,7 @@ public class DbCommandExecutor : IDbCommandExecutor
     /// used to execute database commands through a provided MySQL connection factory.
     /// </summary>
     /// <param name="connectionFactory">The factory responsible for creating MySQL database connections.</param>
-    public DbCommandExecutor(ILogger<DbCommandExecutor> logger, IMySqlConnectionFactory connectionFactory)
+    public DbCommandExecutor(IOptions<DatabaseOptions> options, IMySqlConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
     }
